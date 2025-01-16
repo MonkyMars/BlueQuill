@@ -16,7 +16,7 @@ export async function saveDocument(
         .update({
           title: document.title,
           content: document.content,
-          updated_at: document.updatedAt,
+          updatedAt: document.updatedAt,
         })
         .eq("id", document.id);
       if (error) {
@@ -35,7 +35,7 @@ export async function saveDocument(
         .insert({
           title: document.title,
           content: document.content,
-          updated_at: document.updatedAt,
+          updatedAt: document.updatedAt,
         });
         if (error) {
             return {

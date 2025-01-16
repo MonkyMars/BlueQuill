@@ -191,6 +191,7 @@ export default function EditDocument() {
   const [lastSuggestionTime, setLastSuggestionTime] = useState<number>(0);
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
   const [showLinkEditor, setShowLinkEditor] = useState(false);
+  const [isEditorReady, setIsEditorReady] = useState(false);
   
   useEffect(() => {
     const fetchDocumentAction = async () => {
@@ -201,14 +202,16 @@ export default function EditDocument() {
           router.push("/documents");
           return;
         }
-        console.log(document.owner)
+        
         if(String(document.id) !== String(params.id) || String(document.owner) !== String(user.id)) {
           window.location.href = '/documents';
           return;
         }
+        
         setDocumentTitle(document.title);
         setContent(document.content);
         setIsLoading(false);
+        setIsEditorReady(true);
       } catch (error) {
         console.error("Error fetching document:", error);
         router.push("/documents");
@@ -765,14 +768,12 @@ export default function EditDocument() {
         <div className="flex">
           {/* Editor */}
           <div className={`flex-1 ${showAIPanel ? "mr-4" : ""}`}>
-            <EditorContent
-              editor={editor}
-              content={content}
-              className="min-h-[calc(100vh-144px)] p-4"
-              onChange={() => {
-                if (editor) setContent(editor.getHTML());
-              }}
-            />
+            {isEditorReady && (
+              <EditorContent 
+                editor={editor} 
+                className="prose prose-sm w-full max-w-full mt-4"
+              />
+            )}
           </div>
 
           {showAIPanel && (
