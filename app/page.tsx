@@ -93,7 +93,7 @@ export default function Home() {
             ].map((testimonial, index) => (
               <div key={index} className="bg-white p-8 rounded-xl shadow-lg">
                 <p className="text-lg mb-4 italic text-slate-700">{testimonial.quote}</p>
-                <p className="font-semibold">{testimonial.author}</p>
+                <p className="font-semibold text-gray-700">{testimonial.author}</p>
                 <p className="text-slate-600">{testimonial.role}</p>
               </div>
             ))}

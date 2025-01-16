@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/utils/AuthProvider";
 
-export default function Register() {
+const Page = () => {
   const searchParams = useSearchParams();
   const selectedPlan = searchParams.get("plan");
   const { signUp } = useAuth();
@@ -227,5 +227,13 @@ export default function Register() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function Register() {
+  return (
+    <Suspense fallback={null}>
+      <Page />
+    </Suspense>
   );
 }
