@@ -44,6 +44,7 @@ export default function Login() {
     if (validateForm()) {
       try{
          await signIn(formData.email, formData.password);
+         window.location.href = '/documents';
       } catch(error) {
         console.error("Error signing in:", error);
         setErrors({

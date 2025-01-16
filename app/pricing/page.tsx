@@ -9,7 +9,7 @@ export default function Pricing() {
             Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-slate-200 max-w-2xl mx-auto">
-            Choose the perfect plan for your writing needs. Start free and upgrade as you grow.
+            Choose the perfect plan for your content creation needs. Start free and upgrade as you grow.
           </p>
         </div>
       </section>
@@ -24,7 +24,7 @@ export default function Pricing() {
                   <span className="text-4xl font-bold text-gray-800">$0</span>
                   <span className="text-slate-600">/month</span>
                 </div>
-                <p className="text-slate-600 mb-6">Perfect for getting started with AI-powered writing assistance.</p>
+                <p className="text-slate-600 mb-6">Perfect for getting started with AI-powered document creation.</p>
                 <Link 
                   href="/register" 
                   className="block text-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors w-full"
@@ -34,68 +34,82 @@ export default function Pricing() {
               </div>
               <div className="bg-slate-50 p-8">
                 <ul className="space-y-4">
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    Up to 500 words per month
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Up to 5 documents
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    Basic grammar & style checks
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Basic AI writing assistance
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    3 document types
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Document organization
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    Basic AI suggestions
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Basic SEO tools
                   </li>
                 </ul>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden relative transform md:scale-105 z-10">
-              <div className="absolute top-0 w-full text-center py-2 bg-blue-600 text-white text-sm font-semibold">
-                Most Popular
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform scale-105 relative">
+              <div className="absolute top-0 right-0 bg-blue-600 text-white px-4 py-1 rounded-bl-lg text-sm font-medium">
+                Popular
               </div>
-              <div className="p-8 pt-12">
+              <div className="p-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Pro</h2>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-800">$7,99</span>
+                  <span className="text-4xl font-bold text-gray-800">$15</span>
                   <span className="text-slate-600">/month</span>
                 </div>
-                <p className="text-slate-600 mb-6">For professionals who need advanced writing capabilities.</p>
+                <p className="text-slate-600 mb-6">For professionals who need advanced AI features and collaboration tools.</p>
                 <Link 
                   href="/register?plan=pro" 
                   className="block text-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors w-full"
                 >
-                  Start Pro Trial
+                  Start Free Trial
                 </Link>
               </div>
               <div className="bg-slate-50 p-8">
                 <ul className="space-y-4">
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    Unlimited words
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Unlimited documents
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    Advanced grammar & style analysis
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Advanced AI writing features
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    All document types
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Full SEO optimization tools
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    Advanced AI suggestions
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Team collaboration
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    SEO optimization tools
-                  </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                     Priority support
                   </li>
                 </ul>
@@ -106,42 +120,47 @@ export default function Pricing() {
               <div className="p-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Enterprise</h2>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-800">$24,99</span>
-                  <span className="text-slate-600">/month</span>
+                  <span className="text-4xl font-bold text-gray-800">Custom</span>
                 </div>
-                <p className="text-slate-600 mb-6">For teams and businesses needing advanced features.</p>
+                <p className="text-slate-600 mb-6">For organizations that need custom solutions and enterprise features.</p>
                 <Link 
-                  href="/contact-sales" 
-                  className="block text-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors w-full"
+                  href="/contact" 
+                  className="block text-center bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-lg font-semibold transition-colors w-full"
                 >
                   Contact Sales
                 </Link>
               </div>
               <div className="bg-slate-50 p-8">
                 <ul className="space-y-4">
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                     Everything in Pro
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    Team collaboration tools
-                  </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                     Custom AI model training
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                     Advanced analytics
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    API access
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Dedicated support
                   </li>
-                  <li className="flex items-start text-slate-600">
-                    <span className="text-green-500 mr-2">✓</span>
-                    24/7 dedicated support
+                  <li className="flex items-center text-slate-600">
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Custom integrations
                   </li>
                 </ul>
               </div>
@@ -166,11 +185,11 @@ export default function Pricing() {
               },
               {
                 question: "What payment methods do you accept?",
-                answer: "We accept all major credit cards, PayPal, and bank transfers for Enterprise plans."
+                answer: "We accept all major credit cards and PayPal for Pro plans. For Enterprise plans, we also support bank transfers."
               },
               {
                 question: "Do you offer refunds?",
-                answer: "Yes, we offer a 14-day money-back guarantee if you're not satisfied with your Pro or Enterprise subscription."
+                answer: "Yes, we offer a 14-day money-back guarantee if you're not satisfied with your Pro subscription."
               }
             ].map((faq, index) => (
               <div key={index} className="bg-white p-6 rounded-xl shadow-lg">
@@ -187,7 +206,7 @@ export default function Pricing() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4 text-gray-800">Ready to Get Started?</h2>
           <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-            Join thousands of writers who are already using TextifyAI to improve their writing.
+            Join our community of content creators and start optimizing your documents today.
           </p>
           <Link 
             href="/register" 

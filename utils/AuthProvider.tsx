@@ -1,121 +1,114 @@
 'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
 import { Database } from './database.types';
 
-type DatabaseContext = {
-  user: User | null;
-  isLoading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  refreshSession: () => Promise<void>;
-};
+interface UserProfile {
+  displayName: string;
+  email: string;
+}
 
-const databaseContext = createContext<DatabaseContext | undefined>(undefined);
+interface DatabaseContext {
+  user: User | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  updateUserProfile: (profile: UserProfile) => Promise<void>;
+}
+
+const AuthContext = createContext<DatabaseContext>({
+  user: null,
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+  updateUserProfile: async () => {},
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const database = createClientComponentClient<Database>();
+  const supabase = createClientComponentClient<Database>();
 
   useEffect(() => {
     // Check active session
     const checkSession = async () => {
       try {
-        const { data: { session } } = await database.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
       } catch (error) {
         console.error('Error checking session:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     checkSession();
 
     // Subscribe to auth changes
-    const { data: { subscription } } = database.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user ?? null);
-        setIsLoading(false);
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [database]);
-
-  const signUp = async (email: string, password: string) => {
-    try {
-      const { error } = await database.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing up:', error);
-      throw error;
-    }
-  };
+  }, [supabase.auth]);
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await database.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+  };
 
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing in:', error);
-      throw error;
-    }
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) throw error;
   };
 
   const signOut = async () => {
-    try {
-      const { error } = await database.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing out:', error);
-      throw error;
-    }
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   };
 
-  const refreshSession = async () => {
-    try {
-      const { error } = await database.auth.refreshSession();
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error refreshing session:', error);
-      throw error;
-    }
-  };
+  const updateUserProfile = async (profile: UserProfile) => {
+    if (!user) throw new Error('Not authenticated');
+    
+    // First update auth metadata
+    const { error: metadataError } = await supabase.auth.updateUser({
+      data: { display_name: profile.displayName }
+    });
+    
+    if (metadataError) throw metadataError;
 
-  const value: DatabaseContext = {
-    user,
-    isLoading,
-    signUp,
-    signIn,
-    signOut,
-    refreshSession,
+    // Then update profile in profiles table
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        fullname: profile.displayName,
+      })
+      .eq('user_id', parseInt(user.id));
+    
+    if (profileError) throw profileError;
+    
+    // Update local user state
+    setUser(prev => prev ? {
+      ...prev,
+      user_metadata: {
+        ...prev.user_metadata,
+        display_name: profile.displayName,
+      }
+    } : null);
   };
 
   return (
-    <databaseContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, signIn, signUp, signOut, updateUserProfile }}>
       {children}
-    </databaseContext.Provider>
+    </AuthContext.Provider>
   );
 }
 
-// Custom hook to use the auth context
-export function useAuth() {
-  const context = useContext(databaseContext);
-  if (context === undefined) {
-    throw new Error('useSupabase must be used within a SupabaseProvider');
-  }
-  return context;
-}
+export const useAuth = () => useContext(AuthContext);

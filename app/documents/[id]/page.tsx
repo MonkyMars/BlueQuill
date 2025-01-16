@@ -17,12 +17,34 @@ import { fetchDocument } from "@/utils/document/fetch";
 import { aiChatbot, getAutoCompletion } from "@/utils/document/AIchat";
 import { Mark } from '@tiptap/core';
 import { useAuth } from "@/utils/AuthProvider";
+import { analyzeSEO, optimizeContent } from "@/utils/document/seo";
 
 interface AIAssistantMessage {
   role: "assistant" | "user";
   content: string;
   timestamp: Date;
   canApply?: boolean;
+}
+
+interface SEOAnalysis {
+  score: number;
+  recommendations: Array<{
+    type: 'success' | 'warning' | 'error';
+    message: string;
+    details?: string;
+  }>;
+  keywordAnalysis: {
+    primary: {
+      keyword: string;
+      occurrences: number;
+      density: number;
+    };
+    secondary: Array<{
+      keyword: string;
+      occurrences: number;
+      density: number;
+    }>;
+  };
 }
 
 const Suggestion = Mark.create({
@@ -192,6 +214,10 @@ export default function EditDocument() {
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
   const [showLinkEditor, setShowLinkEditor] = useState(false);
   const [isEditorReady, setIsEditorReady] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chat' | 'seo'>('chat');
+  const [seoAnalysis, setSeoAnalysis] = useState<SEOAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   
   useEffect(() => {
     const fetchDocumentAction = async () => {
@@ -523,6 +549,51 @@ export default function EditDocument() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleSEOAnalysis = async () => {
+    if (!editor) return;
+    
+    setIsAnalyzing(true);
+    try {
+      const analysis = await analyzeSEO(editor.getHTML(), documentTitle);
+      setSeoAnalysis(analysis);
+    } catch (error) {
+      console.error('Error analyzing SEO:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleSEOOptimize = async () => {
+    if (!editor) return;
+    
+    setIsOptimizing(true);
+    try {
+      const { optimizedContent, changes } = await optimizeContent(editor.getHTML(), documentTitle);
+      
+      // Apply the optimized content
+      editor.commands.setContent(optimizedContent);
+      
+      // Add optimization changes to AI messages
+      const changeMessage = changes.map(change => 
+        `Changed: "${change.original}" to "${change.suggestion}"\nReason: ${change.reason}`
+      ).join('\n\n');
+      
+      setAiMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `Applied SEO Optimizations:\n\n${changeMessage}`,
+        timestamp: new Date(),
+        canApply: false
+      }]);
+      
+      // Trigger a new analysis
+      handleSEOAnalysis();
+    } catch (error) {
+      console.error('Error optimizing content:', error);
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <main className="min-h-screen bg-white flex items-center justify-center">
@@ -779,69 +850,210 @@ export default function EditDocument() {
           {showAIPanel && (
             <div className="w-80 bg-white border-l-2 border-gray-200">
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  AI Assistant
-                </h3>
-                <div className="space-y-4 mb-4 h-[calc(100vh-400px)] overflow-y-auto">
-                  {aiMessages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`p-3 rounded-lg ${
-                        message.role === "assistant"
-                          ? "bg-blue-50 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-gray-500">
-                          {message.timestamp.toLocaleTimeString()}
-                        </span>
-                        {message.role === "assistant" && (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleCopyAISuggestion(index)}
-                              className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
-                            >
-                              Copy
-                            </button>
-                            {message.canApply && (
-                              <button
-                                onClick={() => handleApplyAISuggestion(index)}
-                                className="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors"
-                              >
-                                Apply
-                              </button>
+                <div className="flex border-b border-gray-200 mb-4">
+                  <button
+                    onClick={() => setActiveTab('chat')}
+                    className={`px-4 py-2 text-sm font-medium ${
+                      activeTab === 'chat'
+                        ? 'text-blue-600 border-b-2 border-blue-600'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    Chat
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('seo')}
+                    className={`px-4 py-2 text-sm font-medium ${
+                      activeTab === 'seo'
+                        ? 'text-blue-600 border-b-2 border-blue-600'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    SEO Optimization
+                  </button>
+                </div>
+
+                {activeTab === 'chat' ? (
+                  <>
+                    <div className="space-y-4 mb-4 h-[calc(100vh-400px)] overflow-y-auto">
+                      {aiMessages.map((message, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 rounded-lg ${
+                            message.role === "assistant"
+                              ? "bg-blue-50 text-blue-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs text-gray-500">
+                              {message.timestamp.toLocaleTimeString()}
+                            </span>
+                            {message.role === "assistant" && (
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleCopyAISuggestion(index)}
+                                  className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                                >
+                                  Copy
+                                </button>
+                                {message.canApply && (
+                                  <button
+                                    onClick={() => handleApplyAISuggestion(index)}
+                                    className="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors"
+                                  >
+                                    Apply
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </div>
-                        )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t border-gray-200 pt-4">
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={aiPrompt}
+                          onChange={(e) => setAiPrompt(e.target.value)}
+                          placeholder="Ask AI for help..."
+                          className="flex-1 px-3 py-2 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              handleAIAssist();
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={handleAIAssist}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Send
+                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="Ask AI for help..."
-                      className="flex-1 px-3 py-2 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleAIAssist();
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={handleAIAssist}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Send
-                    </button>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-800 mb-2">SEO Score</h4>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-full bg-blue-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${seoAnalysis?.score ?? 0}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium text-blue-800">
+                          {seoAnalysis?.score ?? 0}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-800 mb-2">Recommendations</h4>
+                      <div className="space-y-2">
+                        {seoAnalysis?.recommendations.map((rec: { type: 'success' | 'warning' | 'error'; message: string; details?: string }, index: number) => (
+                          <div 
+                            key={index} 
+                            className={`p-3 rounded-lg ${
+                              rec.type === 'success' ? 'bg-green-50' :
+                              rec.type === 'warning' ? 'bg-yellow-50' : 'bg-red-50'
+                            }`}
+                          >
+                            <div className="flex items-start">
+                              <svg 
+                                className={`w-5 h-5 mt-0.5 ${
+                                  rec.type === 'success' ? 'text-green-600' :
+                                  rec.type === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                                }`} 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                {rec.type === 'success' ? (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                ) : rec.type === 'warning' ? (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                ) : (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                )}
+                              </svg>
+                              <div className="ml-3">
+                                <p className={`text-sm ${
+                                  rec.type === 'success' ? 'text-green-800' :
+                                  rec.type === 'warning' ? 'text-yellow-800' : 'text-red-800'
+                                }`}>
+                                  {rec.message}
+                                </p>
+                                {rec.details && (
+                                  <p className={`text-xs mt-1 ${
+                                    rec.type === 'success' ? 'text-green-600' :
+                                    rec.type === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>
+                                    {rec.details}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-800 mb-2">Keyword Analysis</h4>
+                      <div className="space-y-2">
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <div className="mb-4">
+                            <span className="text-sm font-medium text-gray-700">Primary Keyword</span>
+                            <div className="mt-1 flex items-center justify-between">
+                              <span className="text-sm text-gray-600">
+                                {seoAnalysis?.keywordAnalysis.primary.keyword}
+                              </span>
+                              <span className="text-sm font-medium text-gray-800">
+                                {seoAnalysis?.keywordAnalysis.primary.occurrences} occurrences 
+                                ({(seoAnalysis?.keywordAnalysis.primary.density ?? 0).toFixed(2)}%)
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Secondary Keywords</span>
+                            {seoAnalysis?.keywordAnalysis.secondary.map((keyword: { keyword: string; occurrences: number; density: number }, index: number) => (
+                              <div key={index} className="mt-2 flex items-center justify-between">
+                                <span className="text-sm text-gray-600">{keyword.keyword}</span>
+                                <span className="text-sm font-medium text-gray-800">
+                                  {keyword.occurrences} occurrences 
+                                  ({keyword.density.toFixed(2)}%)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleSEOAnalysis}
+                        disabled={isAnalyzing}
+                        className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+                      >
+                        {isAnalyzing ? 'Analyzing...' : 'Analyze Content'}
+                      </button>
+                      <button
+                        onClick={handleSEOOptimize}
+                        disabled={isOptimizing}
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      >
+                        {isOptimizing ? 'Optimizing...' : 'Optimize Content'}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -884,23 +1096,23 @@ export default function EditDocument() {
           shouldShow={({ editor }) => editor.isActive('link')}
           tippyOptions={{ duration: 100 }}
         >
-          <LinkEditor editor={editor} isOpen={true} setIsOpen={() => {}} />
+          <div className="bg-white rounded-lg shadow-lg p-2">
+            <button
+              onClick={() => setShowLinkEditor(true)}
+              className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+            >
+              Edit Link
+            </button>
+            <button
+              onClick={() => editor.chain().focus().unsetLink().run()}
+              className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded ml-1"
+            >
+              Remove Link
+            </button>
+          </div>
         </BubbleMenu>
       )}
       
-      {/* Add link button to editor controls */}
-      <button
-        onClick={() => setShowLinkEditor(true)}
-        className={`p-2 rounded hover:bg-gray-100 ${
-          editor?.isActive("link") ? "bg-gray-100" : ""
-        }`}
-        title="Add link"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-        </svg>
-      </button>
-
       {/* Show link editor when button is clicked */}
       {showLinkEditor && editor && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

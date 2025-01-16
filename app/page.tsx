@@ -6,10 +6,10 @@ export default function Home() {
       <section className="bg-gradient-to-r from-slate-900 to-blue-900 text-white py-20">
         <div className="container mx-auto px-4">
           <h1 className="text-5xl font-bold mb-4">
-            Unleash Your Creativity with AI-Powered Writing
+            AI-Powered Document Creation and Optimization
           </h1>
           <p className="text-xl mb-8 text-slate-200">
-            Let TextifyAI assist you in drafting, refining, and optimizing your content—whether you&apos;re writing blogs, scripts, or academic papers. Powered by advanced AI, your words just got smarter.
+            TextifyAI helps you create, edit, and optimize your documents with intelligent AI assistance. From content suggestions to SEO optimization, we make your writing process smarter and more efficient.
           </p>
           <div className="space-x-4">
             <Link href="/register" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
@@ -28,20 +28,20 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                title: 'AI-Driven Writing Assistance',
-                description: 'Generate ideas, optimize content, and improve writing quality with AI suggestions tailored to your needs.'
+                title: 'AI Writing Assistant',
+                description: 'Get real-time suggestions and improvements as you write, with context-aware AI that understands your content.'
               },
               {
-                title: 'Smart Content Optimization',
-                description: 'Enhance readability, SEO, and engagement by letting our AI handle keyword integration and content structure.'
+                title: 'SEO Optimization',
+                description: 'Analyze and optimize your content for search engines with keyword suggestions and readability improvements.'
               },
               {
-                title: 'Script & Academic Writing Support',
-                description: `Whether you're drafting a script or writing an essay, TextifyAI tailors its tools to your specific project type.`
+                title: 'Document Management',
+                description: 'Organize and manage all your documents in one place with easy search, filtering, and categorization.'
               },
               {
-                title: 'Seamless Workflow',
-                description: 'Enjoy a distraction-free writing environment with tools that integrate smoothly into your writing process.'
+                title: 'Collaborative Tools',
+                description: 'Share and collaborate on documents with team members, with version control and real-time updates.'
               }
             ].map((feature, index) => (
               <div key={index} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow text-gray-800">
@@ -58,10 +58,10 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-12 text-center text-gray-700">How It Works</h2>
           <div className="grid md:grid-cols-4 gap-8">
             {[
-              { step: '1', title: 'Start Writing', description: 'Begin your writing process with an initial draft or blank page.' },
-              { step: '2', title: 'AI-Assist', description: 'Let TextifyAI analyze your content and provide suggestions for structure, tone, and optimization.' },
-              { step: '3', title: 'Refine & Finish', description: 'Use the AI-driven feedback to make real-time adjustments, adding keywords, refining grammar, and polishing your writing.' },
-              { step: '4', title: 'Done & Ready', description: 'Whether for blogs, scripts, or essays, your content is ready for the next step—publication, submission, or collaboration.' }
+              { step: '1', title: 'Create Document', description: 'Start with a new document or import existing content.' },
+              { step: '2', title: 'Write & Edit', description: 'Use our intuitive editor with real-time AI assistance and suggestions.' },
+              { step: '3', title: 'Optimize', description: 'Enhance your content with SEO tools and readability improvements.' },
+              { step: '4', title: 'Share & Export', description: 'Share your optimized content or export it for use anywhere.' }
             ].map((step, index) => (
               <div key={index} className="text-center">
                 <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
@@ -81,14 +81,14 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-8">
             {[
               {
-                quote: "TextifyAI has transformed the way I write. It's like having a professional editor and content strategist by my side every step of the way!",
+                quote: "TextifyAI's AI assistant and SEO tools have helped me create better content in less time. The suggestions are always relevant and helpful.",
                 author: "Sarah Johnson",
-                role: "Blogger"
+                role: "Content Creator"
               },
               {
-                quote: "Perfect for scripts and essays—this AI makes my writing process 10 times faster.",
+                quote: "The document management and collaboration features make it easy to work with my team. The AI suggestions are a game-changer.",
                 author: "Michael Chen",
-                role: "Scriptwriter"
+                role: "Team Lead"
               }
             ].map((testimonial, index) => (
               <div key={index} className="bg-white p-8 rounded-xl shadow-lg">
@@ -103,9 +103,9 @@ export default function Home() {
 
       <section className="bg-blue-900 text-white py-20">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Start writing smarter today!</h2>
+          <h2 className="text-3xl font-bold mb-4">Start creating better content today!</h2>
           <p className="text-xl mb-8">
-            Join thousands of users who are transforming their writing process with TextifyAI.
+            Join our community of writers and content creators using TextifyAI to improve their work.
           </p>
           <Link href="/register" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors inline-block">
             Get Started Now - It&apos;s Free

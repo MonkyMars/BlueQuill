@@ -7,6 +7,52 @@ import { DocumentType } from "@/utils/types";
 import { createUserDocument } from "@/utils/user/document/create";
 import { deleteUserDocument } from "@/utils/user/document/delete";
 import { useAuth } from "@/utils/AuthProvider";
+import { renameUserDocument } from "@/utils/user/document/rename";
+
+interface RenameModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onRename: (newTitle: string) => void;
+  currentTitle: string;
+}
+
+function RenameModal({ isOpen, onClose, onRename, currentTitle }: RenameModalProps) {
+  const [newTitle, setNewTitle] = useState(currentTitle);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-96">
+        <h3 className="text-lg font-semibold mb-4">Rename Document</h3>
+        <input
+          type="text"
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          placeholder="Enter new title"
+        />
+        <div className="flex justify-end space-x-2 mt-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              onRename(newTitle);
+              onClose();
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Rename
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Documents() {
   const [documents, setDocuments] = useState<DocumentType[]>([]);
@@ -16,6 +62,9 @@ export default function Documents() {
   const [sortBy, setSortBy] = useState<"name" | "date">("date");
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentType | null>(null);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -63,6 +112,23 @@ export default function Documents() {
       }
     } catch (error) {
       console.error("Error deleting document:", error);
+    }
+  };
+
+  const handleRename = async (newTitle: string) => {
+    if (!selectedDocument || !user) return;
+    
+    try {
+      const data = await renameUserDocument(selectedDocument.id, newTitle, user.id);
+      if (data.success) {
+        setDocuments(documents.map(doc => 
+          doc.id === selectedDocument.id 
+            ? { ...doc, title: newTitle }
+            : doc
+        ));
+      }
+    } catch (error) {
+      console.error('Error renaming document:', error);
     }
   };
 
@@ -276,52 +342,61 @@ export default function Documents() {
                   </span>
                 </div>
                 <div className="w-24 text-gray-600 capitalize">{doc.type}</div>
-                <button
-                  className="w-8 text-gray-400 hover:text-gray-600"
-                  onClick={() => deleteDocument(doc.id)}
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
+                <div className="relative">
+                  <button
+                    className="w-8 text-gray-400 hover:text-gray-600"
+                    onClick={() => {
+                      setSelectedDocument(doc);
+                      setRenameModalOpen(true);
+                      setMenuOpen(null);
+                    }}
                   >
-                    <path
-                      d="M3 6H5H21"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M8 6V4C8 3.44772 8.44771 3 9 3H15C15.5523 3 16 3.44772 16 4V6M19 6V20C19 20.5523 18.5523 21 18 21H6C5.44771 21 5 20.5523 5 20V6H19Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M10 11V17"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M14 11V17"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
+                    <svg
+                      className="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                    </svg>
+                  </button>
+                  {menuOpen === doc.id && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 py-1">
+                      <button
+                        onClick={() => {
+                          setSelectedDocument(doc);
+                          setRenameModalOpen(true);
+                          setMenuOpen(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Rename
+                      </button>
+                      <button
+                        onClick={() => {
+                          deleteDocument(doc.id);
+                          setMenuOpen(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))
           )}
         </div>
       </div>
+      <RenameModal
+        isOpen={renameModalOpen}
+        onClose={() => {
+          setRenameModalOpen(false);
+          setSelectedDocument(null);
+        }}
+        onRename={handleRename}
+        currentTitle={selectedDocument?.title || ""}
+      />
     </main>
   );
 }
