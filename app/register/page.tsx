@@ -7,7 +7,8 @@ import { useAuth } from "@/utils/AuthProvider";
 
 const Page = () => {
   const searchParams = useSearchParams();
-  const selectedPlan = searchParams.get("plan");
+  const plan = searchParams.get("plan");
+  const selectedPlan: 'free'| 'pro'| 'enterprise' | null = plan === 'free' || plan === 'pro' || plan === 'enterprise' ? plan : null;
   const { signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,7 +19,7 @@ const Page = () => {
   });
 
   const [errors, setErrors] = useState({
-    
+    name: " ",
     email: "",
     password: "",
     confirmPassword: "",
@@ -27,7 +28,7 @@ const Page = () => {
   const validateForm = () => {
     let isValid = true;
     const newErrors = {
-      
+      name: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -67,10 +68,13 @@ const Page = () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    if(!selectedPlan)
     try {
       await signUp(
         formData.email,
         formData.password,
+        formData.name,
+        selectedPlan || 'free'
       );
       window.location.href = '/documents';
     } catch (error) {
