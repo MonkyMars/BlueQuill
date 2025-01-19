@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/utils/AuthProvider";
-
+import { useRouter } from "next/navigation";
 const Page = () => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
   const selectedPlan: 'free'| 'pro'| 'enterprise' | null = plan === 'free' || plan === 'pro' || plan === 'enterprise' ? plan : null;
@@ -19,7 +20,7 @@ const Page = () => {
   });
 
   const [errors, setErrors] = useState({
-    name: " ",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -76,11 +77,11 @@ const Page = () => {
         formData.name,
         selectedPlan || 'free'
       );
-      window.location.href = '/documents';
+      router.replace('/documents');
     } catch (error) {
       setErrors(prev => ({
         ...prev,
-        email: error instanceof Error ? error.message : 'Registration failed. Please try again.'
+        name: error instanceof Error ? error.message : 'Registration failed. Please try again.'
       }));
     } finally {
       setIsLoading(false);
@@ -112,6 +113,29 @@ const Page = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Full name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-800 ${
+                    errors.name ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="John Doe"
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                )}
+              </div>
               <div>
                 <label
                   htmlFor="email"

@@ -17,8 +17,11 @@ export default function Navigation() {
     { href: "/", label: "Home" },
     { href: "/learn-more", label: "Learn More" },
     { href: "/pricing", label: "Pricing" },
+    user
+      ? { href: "/settings", label: "Settings" }
+      : { href: "/login", label: "Sign In" },
   ];
-  console.log(user);
+
   return (
     <nav className="bg-white shadow-sm fixed w-full z-50">
       <div className="container mx-auto px-4">
@@ -41,7 +44,6 @@ export default function Navigation() {
                 </Link>
               ))}
             </div>
-
             {!user?.id ? (
               <div className="flex items-center space-x-4">
                 <Link

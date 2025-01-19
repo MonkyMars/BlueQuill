@@ -1,9 +1,11 @@
 "use client";
 import { useAuth } from "@/utils/AuthProvider";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Settings() {
-  const { user, updateUserProfile } = useAuth();
+  const { user, updateUserProfile, signOut } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [formData, setFormData] = useState({
@@ -31,6 +33,11 @@ export default function Settings() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.replace('/login');
   };
 
   return (
@@ -92,10 +99,16 @@ export default function Settings() {
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Danger Zone</h2>
               <button
                 onClick={() => {/* TODO: Implement account deletion */}}
-                className="text-red-600 hover:text-red-700 font-medium"
+                className="block w-full px-4 py-2 text-red-600 font-medium border-2 border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors duration-300"
               >
                 Delete Account
               </button>
+                <button 
+                className="block w-full mt-4 px-4 py-2 text-red-600 font-medium border-2 border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors duration-300" 
+                onClick={handleSignOut}
+                >
+                Log out
+                </button>
             </div>
           </div>
         </div>

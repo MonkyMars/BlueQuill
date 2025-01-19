@@ -1,7 +1,10 @@
-'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
-import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
-import { Database } from './database.types';
+"use client";
+import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createClientComponentClient,
+  User,
+} from "@supabase/auth-helpers-nextjs";
+import { Database } from "./database.types";
 
 interface UserProfile {
   displayName: string;
@@ -11,7 +14,23 @@ interface UserProfile {
 interface DatabaseContext {
   user: User | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string, plan: 'free' | 'pro' | 'enterprise') => Promise<{ user: User; profile: { created_at: string; fullname: string; id: number; plan: string; role: string; user_id: number; }; }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    plan: "free" | "pro" | "enterprise"
+  ) => Promise<{
+    user: User;
+    profile: {
+      created_at: string;
+      full_name: string;
+      email: string;
+      plan: string;
+      role: string;
+      user_id: string;
+      updated_at: string;
+    };
+  }>;
   signOut: () => Promise<void>;
   updateUserProfile: (profile: UserProfile) => Promise<void>;
 }
@@ -20,7 +39,7 @@ const AuthContext = createContext<DatabaseContext>({
   user: null,
   signIn: async () => {},
   signUp: async () => {
-    throw new Error('Not implemented');
+    throw new Error("Not implemented");
   },
   signOut: async () => {},
   updateUserProfile: async () => {},
@@ -34,21 +53,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check active session
     const checkSession = async () => {
       try {
-        const { data: { session } } = await database.auth.getSession();
+        const {
+          data: { session },
+        } = await database.auth.getSession();
         setUser(session?.user ?? null);
       } catch (error) {
-        console.error('Error checking session:', error);
+        console.error("Error checking session:", error);
       }
     };
 
     checkSession();
 
     // Subscribe to auth changes
-    const { data: { subscription } } = database.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
+    const {
+      data: { subscription },
+    } = database.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null);
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -67,40 +88,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     fullName: string,
-    plan: 'free' | 'pro' | 'enterprise' = 'free'
+    plan: "free" | "pro" | "enterprise" = "free"
   ) => {
     try {
-      const { data: authData, error: signUpError } = await database.auth.signUp({
-        email,
-        password,
-      });
-      
+      const { data: authData, error: signUpError } = await database.auth.signUp(
+        {
+          email,
+          password,
+        }
+      );
+
       if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error('User not found');
-    
+      if (!authData.user) throw new Error("User not found");
+
+      if (!authData.user.email) throw new Error("Email is required");
+
       const { data: profileData, error: profileError } = await database
-        .from('profiles')
-        .insert([
-          {
-            user_id: parseInt(authData.user.id), 
-            fullname: fullName,
-            plan: plan,
-            created_at: new Date().toISOString()
-          }
-        ])
+        .from("profiles")
+        .insert({
+          email: authData.user.email,
+          full_name: fullName,
+          plan,
+          role: "user",
+          user_id: authData.user.id,
+          created_at: String(new Date().toISOString()),
+          updated_at: String(new Date().toISOString()),
+        })
         .select()
         .single();
-        
+
       if (profileError) {
-        await database.auth.admin.deleteUser(authData.user.id);
+        await database.auth.signOut();
         throw profileError;
       }
-      
+
       return {
         user: authData.user,
-        profile: profileData
+        profile: {
+          ...profileData,
+          user_id: String(profileData.user_id),
+        },
       };
-      
     } catch (error) {
       throw error;
     }
@@ -112,37 +140,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUserProfile = async (profile: UserProfile) => {
-    if (!user) throw new Error('Not authenticated');
-    
+    if (!user) throw new Error("Not authenticated");
+
     // First update auth metadata
     const { error: metadataError } = await database.auth.updateUser({
-      data: { display_name: profile.displayName }
+      data: { display_name: profile.displayName },
     });
-    
+
     if (metadataError) throw metadataError;
 
     // Then update profile in profiles table
     const { error: profileError } = await database
-      .from('profiles')
+      .from("profiles")
       .update({
-        fullname: profile.displayName,
+        full_name: profile.displayName,
       })
-      .eq('user_id', parseInt(user.id));
-    
+      .eq("user_id", user.id);
+
     if (profileError) throw profileError;
-    
+
     // Update local user state
-    setUser(prev => prev ? {
-      ...prev,
-      user_metadata: {
-        ...prev.user_metadata,
-        display_name: profile.displayName,
-      }
-    } : null);
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            user_metadata: {
+              ...prev.user_metadata,
+              display_name: profile.displayName,
+            },
+          }
+        : null
+    );
   };
 
   return (
-    <AuthContext.Provider value={{ user, signIn, signUp, signOut, updateUserProfile }}>
+    <AuthContext.Provider
+      value={{ user, signIn, signUp, signOut, updateUserProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

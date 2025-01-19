@@ -2,8 +2,10 @@
 import { useAuth } from "@/utils/AuthProvider";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
+  const router = useRouter();
   const { signIn } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
@@ -44,7 +46,7 @@ export default function Login() {
     if (validateForm()) {
       try{
          await signIn(formData.email, formData.password);
-         window.location.href = '/documents';
+        router.replace("/documents");
       } catch(error) {
         console.error("Error signing in:", error);
         setErrors({
