@@ -8,53 +8,13 @@ import { createUserDocument } from "@/utils/user/document/create";
 import { deleteUserDocument } from "@/utils/user/document/delete";
 import { useAuth } from "@/utils/AuthProvider";
 import { renameUserDocument } from "@/utils/user/document/rename";
-
-interface RenameModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onRename: (newTitle: string) => void;
-  currentTitle: string;
-}
-
-function RenameModal({ isOpen, onClose, onRename, currentTitle }: RenameModalProps) {
-  const [newTitle, setNewTitle] = useState(currentTitle);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-96">
-        <h3 className="text-lg font-semibold mb-4">Rename Document</h3>
-        <input
-          type="text"
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          placeholder="Enter new title"
-        />
-        <div className="flex justify-end space-x-2 mt-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              onRename(newTitle);
-              onClose();
-            }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Rename
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { RenameModal } from "./RenameModal";
+import Alert from "../components/ui/alert";
+import { useRouter } from "next/navigation";
+import { ArrowDown, FileText, Plus, Search } from "lucide-react";
 
 export default function Documents() {
+  const router = useRouter();
   const [documents, setDocuments] = useState<DocumentType[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
@@ -65,6 +25,19 @@ export default function Documents() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<DocumentType | null>(null);
+  const [alert, setAlert] = useState<{ title: string; message: string; isVisible: boolean }>({
+    title: "Document Limit Reached",
+    message: "You have reached the maximum number of documents allowed. Please delete a document to create a new one or upgrade your account.",
+    isVisible: false,
+  });
+
+  const onCloseAlert = () => {
+    setAlert({
+      title: "",
+      message: "",
+      isVisible: false,
+    });
+  };
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -87,6 +60,14 @@ export default function Documents() {
 
   const createDocument = async () => {
     if (!user) return;
+    if(documents.length >= 4) {
+      setAlert({
+        title: "Document Limit Reached",
+        message: "You have reached the maximum number of documents allowed. Please delete a document to create a new one.",
+        isVisible: true,
+      })
+      return;
+    }
     const newDocument: DocumentType = {
       owner: user.id,
       id: "new",
@@ -98,7 +79,7 @@ export default function Documents() {
     const data = await createUserDocument(newDocument, user.id);
     if (data && data.success) {
       setDocuments([...documents, data.data]);
-      window.location.href = `/documents/${data.data.id}`;
+      router.replace(`/documents/${data.data.id}`);
       console.log("Document created:", data.data);
     }
   };
@@ -172,19 +153,7 @@ export default function Documents() {
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
             href={""}
           >
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+            <Plus className="w-5 h-5 mr-2" />
             New Document
           </Link>
         </div>
@@ -200,19 +169,7 @@ export default function Documents() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800"
                 />
-                <svg
-                  className="w-5 h-5 text-gray-400 absolute left-3 top-2.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
               </div>
             </div>
             <select
@@ -240,7 +197,7 @@ export default function Documents() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white rounded-xl shadow-sm pt-4">
           <div className="flex items-center px-6 py-3 border-b border-gray-200">
             <button
               onClick={() => setSortBy("name")}
@@ -250,17 +207,7 @@ export default function Documents() {
             >
               Name
               {sortBy === "name" && (
-                <svg
-                  className="w-4 h-4 ml-1"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <ArrowDown className="w-4 h-4 ml-2"/>
               )}
             </button>
             <button
@@ -270,19 +217,9 @@ export default function Documents() {
               } hover:text-blue-600 transition-colors w-48`}
             >
               Last Modified
-              {sortBy === "date" && (
-                <svg
-                  className="w-4 h-4 ml-1"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
+                {sortBy === "date" && (
+                <ArrowDown className="w-4 h-4 ml-2"/>
+                )}
             </button>
             <div className="w-24 text-gray-600">Status</div>
             <div className="w-24 text-gray-600">Type</div>
@@ -303,19 +240,7 @@ export default function Documents() {
                   href={`/documents/${doc.id}`}
                   className="flex-1 flex items-center"
                 >
-                  <svg
-                    className="w-5 h-5 text-gray-400 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
+                  <FileText className="w-5 h-5 text-gray-600 mr-2" />
                   <span className="text-gray-800 hover:text-blue-600 transition-colors">
                     {doc.title}
                   </span>
@@ -397,6 +322,7 @@ export default function Documents() {
         onRename={handleRename}
         currentTitle={selectedDocument?.title || ""}
       />
+      <Alert props={alert} onClose={onCloseAlert} onConfirm={() => router.replace('/pricing')} />
     </main>
   );
 }

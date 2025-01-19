@@ -607,7 +607,7 @@ export default function EditDocument() {
 
   return (
     <main className="min-h-screen bg-white">
-      <div className="fixed top-16 left-0 right-0 bg-white border-b border-gray-200 z-10">
+      <div className="fixed top-24 left-0 right-0 bg-white border-b border-gray-200 z-10">
         <div className="container mx-auto px-4 text-gray-800">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-4">
@@ -835,7 +835,7 @@ export default function EditDocument() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 pt-36">
+      <div className="container mx-auto px-4 pt-52">
         <div className="flex">
           {/* Editor */}
           <div className={`flex-1 ${showAIPanel ? "mr-4" : ""}`}>
