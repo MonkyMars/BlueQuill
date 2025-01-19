@@ -14,10 +14,10 @@ export default function Pricing() {
         </div>
       </section>
 
-      <section className="py-16 -mt-8">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <section className="py-16 -mt-8 w-full">
+        <div className="mx-auto flex-shrink-0 px-4">
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden w-full">
               <div className="p-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Free</h2>
                 <div className="mb-6">
@@ -32,7 +32,7 @@ export default function Pricing() {
                   Get Started
                 </Link>
               </div>
-              <div className="bg-slate-50 p-8">
+              <div className="bg-slate-50 p-8 h-full">
                 <ul className="space-y-4">
                   <li className="flex items-center text-slate-600">
                     <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,7 +69,7 @@ export default function Pricing() {
               <div className="p-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Pro</h2>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-800">$15</span>
+                  <span className="text-4xl font-bold text-gray-800">$7.99</span>
                   <span className="text-slate-600">/month</span>
                 </div>
                 <p className="text-slate-600 mb-6">For professionals who need advanced AI features and collaboration tools.</p>
@@ -80,7 +80,7 @@ export default function Pricing() {
                   Start Free Trial
                 </Link>
               </div>
-              <div className="bg-slate-50 p-8">
+              <div className="bg-slate-50 p-8 h-full">
                 <ul className="space-y-4">
                   <li className="flex items-center text-slate-600">
                     <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +130,7 @@ export default function Pricing() {
                   Contact Sales
                 </Link>
               </div>
-              <div className="bg-slate-50 p-8">
+              <div className="bg-slate-50 p-8 h-full">
                 <ul className="space-y-4">
                   <li className="flex items-center text-slate-600">
                     <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
