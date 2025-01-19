@@ -5,6 +5,7 @@ import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/utils/AuthProvider";
 import { useRouter } from "next/navigation";
+
 const Page = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -77,7 +78,7 @@ const Page = () => {
         formData.name,
         selectedPlan || 'free'
       );
-      router.replace('/documents');
+      router.replace(`/confirm-email?email=${formData.email}`);
     } catch (error) {
       setErrors(prev => ({
         ...prev,
