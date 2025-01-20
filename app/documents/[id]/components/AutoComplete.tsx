@@ -38,10 +38,9 @@ export const useEditorAutocomplete = ({
       if (!editor?.view?.state) return;
 
       try {
-        // Sanitize the completion text by removing any invalid characters
         const sanitizedCompletion = completion
-          .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Remove control characters
-          .replace(/\uFFFD/g, ""); // Remove replacement character
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+          .replace(/\uFFFD/g, ""); 
 
         if (!sanitizedCompletion) return;
 

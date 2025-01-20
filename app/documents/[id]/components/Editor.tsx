@@ -151,7 +151,7 @@ export const Editor = ({ content, onUpdate }: EditorProps) => {
     content: isMounted ? content : "",
     editorProps: {
       attributes: {
-        class: "prose prose-lg max-w-none focus:outline-none min-h-[200px] p-4",
+        class: "prose prose-lg max-w-none focus:outline-none min-h-[200px] p-4 bg-white text-gray-900",
       },
       transformPastedHTML(html) {
         return html.replace(/class="[^"]*"/g, "");
@@ -166,7 +166,7 @@ export const Editor = ({ content, onUpdate }: EditorProps) => {
     return null;
   }
 
-  return <EditorContent editor={editor} />;
+  return <EditorContent editor={editor} className="bg-white text-gray-900" />;
 };
 
 export const useCustomEditor = (

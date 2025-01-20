@@ -171,9 +171,7 @@ export default function EditDocument() {
     setContent(html);
   });
   const [autoComplete, setAutoComplete] = useState(false);
-  const [currentSuggestion, setCurrentSuggestion] = useState<string | null>(
-    null
-  );
+  const [currentSuggestion, setCurrentSuggestion] = useState<string | null>(null);
   const [suggestionPos, setSuggestionPos] = useState<number | null>(null);
   const [showSuggestionControls, setShowSuggestionControls] = useState(false);
   const [suggestionPosition, setSuggestionPosition] = useState({ x: 0, y: 0 });
@@ -495,9 +493,9 @@ export default function EditDocument() {
   return (
     <div className="flex flex-col h-full">
       <div className="relative bg-white pt-2 border-b border-gray-200 z-10 overflow-hidden">
-        <div className="container mx-auto px-4 text-gray-800">
-          <div className="flex items-center justify-between h-14">
-            <div className="flex items-center space-x-4">
+        <div className="container mx-auto px-4 text-gray-800 bg-white">
+          <div className="flex items-center justify-between h-14 bg-white">
+            <div className="flex items-center space-x-4 bg-white">
               <button
                 onClick={() => router.back()}
                 className="text-gray-600 hover:text-gray-800"
@@ -859,15 +857,65 @@ export default function EditDocument() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4">
-        <div className="flex">
+      <div className="container mx-auto px-4 bg-white">
+        <div className="flex bg-white">
           {/* Editor */}
           <div className={`flex-1 pt-4 ${showAIPanel ? "mr-4" : ""}`}>
-            {isEditorReady && (
-              <DynamicEditor
-                content={content}
-                onUpdate={(html) => setContent(html)}
-              />
+            {isEditorReady && editor && (
+              <>
+                <DynamicEditor
+                  content={content}
+                  onUpdate={(html) => setContent(html)}
+                />
+                {showSuggestionControls && (
+                  <div
+                    className="suggestion-controls fixed bg-white shadow-lg rounded-lg p-2 z-50 flex space-x-2"
+                    style={{
+                      left: suggestionPosition.x,
+                      top: suggestionPosition.y,
+                    }}
+                  >
+                    <button
+                      onClick={acceptSuggestion}
+                      className="p-1 rounded hover:bg-blue-50 text-blue-600"
+                      title="Accept suggestion (Tab)"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={declineSuggestion}
+                      className="p-1 rounded hover:bg-red-50 text-red-600"
+                      title="Decline suggestion (Escape)"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -1159,56 +1207,6 @@ export default function EditDocument() {
           )}
         </div>
       </div>
-
-      {/* Suggestion Controls */}
-      {showSuggestionControls && (
-        <div
-          className="fixed z-50 flex items-center space-x-2 bg-white rounded-lg shadow-lg px-2 py-1 transition-opacity duration-200"
-          style={{
-            left: suggestionPosition.x,
-            top: suggestionPosition.y + 4,
-          }}
-        >
-          <button
-            onClick={acceptSuggestion}
-            className="p-1 rounded hover:bg-blue-50 text-blue-600"
-            title="Accept (Tab)"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={declineSuggestion}
-            className="p-1 rounded hover:bg-red-50 text-red-600"
-            title="Decline (Esc)"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
 
       {editor && (
         <BubbleMenu

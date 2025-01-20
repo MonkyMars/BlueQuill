@@ -19,10 +19,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={inter.className + " text-gray-900 bg-white"}>
         <AuthProvider>
           <Navigation/>
-        <div className="pt-18">{children}</div>
+        <div className="pt-18 bg-white">{children}</div>
         </AuthProvider>
       </body>
     </html>
