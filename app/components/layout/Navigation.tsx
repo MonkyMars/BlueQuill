@@ -23,7 +23,7 @@ export default function Navigation() {
   ];
 
   return (
-    <nav className="bg-gradient-to-r from-white to-blue-50 border-b border-blue-100 shadow-md fixed w-full z-50">
+    <nav className="bg-gradient-to-r from-white to-blue-50 border-b border-blue-100 shadow-md relative w-full z-50">
       <div className="container mx-auto">
         <div className="flex justify-between items-center h-20">
           <Link href="/" className="flex items-center space-x-3 group">
