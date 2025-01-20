@@ -5,9 +5,9 @@ export default function Home() {
     <main className="min-h-screen bg-slate-50">
       <section className="bg-gradient-to-r from-slate-900 to-blue-900 text-white py-20">
         <div className="container mx-auto px-16">
-          <h1 className="text-5xl font-bold mb-4">
+            <h1 className="text-5xl font-bold mb-4">
             AI-Powered Document Creation and Optimization
-          </h1>
+            </h1>
           <p className="text-xl mb-8 text-slate-200">
             TextifyAI helps you create, edit, and optimize your documents with intelligent AI assistance. From content suggestions to SEO optimization, we make your writing process smarter and more efficient.
           </p>

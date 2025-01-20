@@ -75,6 +75,7 @@ export default function Navigation() {
           <button
             className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Open mobile menu"
           >
             <svg
               className="w-6 h-6"

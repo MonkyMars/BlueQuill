@@ -1,23 +1,22 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Document from "@tiptap/extension-document";
+import { useEditor, BubbleMenu } from "@tiptap/react";
 import type { DocumentType } from "@/utils/types";
-import Paragraph from "@tiptap/extension-paragraph";
-import Text from "@tiptap/extension-text";
-import Heading from "@tiptap/extension-heading";
-import TextStyle from '@tiptap/extension-text-style';
-import Underline from '@tiptap/extension-underline';
-import Link from '@tiptap/extension-link';
 import { useParams, useRouter } from "next/navigation";
 import { saveDocument } from "@/utils/document/save";
 import { fetchDocument } from "@/utils/document/fetch";
-import { aiChatbot, getAutoCompletion } from "@/utils/document/AIchat";
-import { Mark } from '@tiptap/core';
+import { aiChatbot } from "@/utils/document/AIchat";
 import { useAuth } from "@/utils/AuthProvider";
 import { analyzeSEO, optimizeContent } from "@/utils/document/seo";
+import { useEditorAutocomplete } from "./components/AutoComplete";
+import { useCustomEditor } from "./components/Editor";
+import dynamic from "next/dynamic";
+
+const DynamicEditor = dynamic(
+  () => import("./components/Editor").then((mod) => mod.Editor),
+  { ssr: false }
+);
 
 interface AIAssistantMessage {
   role: "assistant" | "user";
@@ -29,7 +28,7 @@ interface AIAssistantMessage {
 interface SEOAnalysis {
   score: number;
   recommendations: Array<{
-    type: 'success' | 'warning' | 'error';
+    type: "success" | "warning" | "error";
     message: string;
     details?: string;
   }>;
@@ -47,72 +46,12 @@ interface SEOAnalysis {
   };
 }
 
-const Suggestion = Mark.create({
-  name: 'suggestion',
-  priority: 1000,
-  keepOnSplit: false,
-  inclusive: false,
-  parseHTML() {
-    return [
-      {
-        tag: 'span',
-        class: 'suggestion',
-      },
-    ]
-  },
-  renderHTML() {
-    return ['span', { class: 'suggestion' }, 0]
-  }
-});
-
-const FontSize = Mark.create({
-  name: 'fontSize',
-  addOptions() {
-    return {
-      types: ['textStyle'],
-    }
-  },
-  addAttributes() {
-    return {
-      class: {
-        default: 'text-base',
-        parseHTML: element => element.getAttribute('class'),
-        renderHTML: attributes => {
-          if (!attributes.class) {
-            return {}
-          }
-          return {
-            class: attributes.class,
-          }
-        },
-      },
-    }
-  },
-  parseHTML() {
-    return [
-      {
-        tag: 'span',
-        getAttrs: element => {
-          const classNames = element.getAttribute('class')
-          if (!classNames) return false
-          return {
-            class: classNames.split(' ').find(name => name.startsWith('text-')),
-          }
-        },
-      },
-    ]
-  },
-  renderHTML({ HTMLAttributes }) {
-    return ['span', HTMLAttributes, 0]
-  },
-});
-
 const TEXT_SIZES = [
-  { name: 'Small', class: 'text-sm' },
-  { name: 'Normal', class: 'text-base' },
-  { name: 'Large', class: 'text-2xl' },
-  { name: 'Extra Large', class: 'text-4xl' },
-  { name: 'Huge', class: 'text-6xl' },
+  { name: "Small", class: "text-sm" },
+  { name: "Normal", class: "text-base" },
+  { name: "Large", class: "text-2xl" },
+  { name: "Extra Large", class: "text-4xl" },
+  { name: "Huge", class: "text-6xl" },
 ];
 
 interface LinkEditorProps {
@@ -122,30 +61,33 @@ interface LinkEditorProps {
 }
 
 const LinkEditor = ({ editor, isOpen, setIsOpen }: LinkEditorProps) => {
-  const [linkUrl, setLinkUrl] = useState('');
-  const [linkText, setLinkText] = useState('');
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkText, setLinkText] = useState("");
 
   useEffect(() => {
     if (isOpen && editor) {
       const { from, to } = editor.state.selection;
       const text = editor.state.doc.textBetween(from, to);
       setLinkText(text);
-      
-      const linkMark = editor.getAttributes('link');
-      setLinkUrl(linkMark.href || '');
+
+      const linkMark = editor.getAttributes("link");
+      setLinkUrl(linkMark.href || "");
     }
   }, [isOpen, editor]);
 
   const saveLink = () => {
     if (!editor || !linkUrl) return;
 
-    if (linkText !== editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to)) {
+    if (
+      linkText !==
+      editor.state.doc.textBetween(
+        editor.state.selection.from,
+        editor.state.selection.to
+      )
+    ) {
       editor.commands.insertContent(linkText);
     }
-    editor.chain()
-      .focus()
-      .setLink({ href: linkUrl })
-      .run();
+    editor.chain().focus().setLink({ href: linkUrl }).run();
 
     setIsOpen(false);
   };
@@ -159,26 +101,36 @@ const LinkEditor = ({ editor, isOpen, setIsOpen }: LinkEditorProps) => {
   return (
     <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 bg-white rounded-lg shadow-lg p-2 w-full sm:w-[500px]">
       <input
-      type="text"
-      placeholder="Link text"
-      value={linkText}
-      onChange={(e) => setLinkText(e.target.value)}
-      className="w-full sm:flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-gray-800"
+        type="text"
+        placeholder="Link text"
+        value={linkText}
+        onChange={(e) => setLinkText(e.target.value)}
+        className="w-full sm:flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-gray-800"
       />
       <input
-      type="text"
-      placeholder="URL"
-      value={linkUrl}
-      onChange={(e) => setLinkUrl(e.target.value)}
-      className="w-full sm:flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-gray-800"
+        type="text"
+        placeholder="URL"
+        value={linkUrl}
+        onChange={(e) => setLinkUrl(e.target.value)}
+        className="w-full sm:flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-gray-800"
       />
       <button
         onClick={saveLink}
         className="p-1 rounded hover:bg-blue-50 text-blue-600"
         title="Save link"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M5 13l4 4L19 7"
+          />
         </svg>
       </button>
       <button
@@ -186,8 +138,18 @@ const LinkEditor = ({ editor, isOpen, setIsOpen }: LinkEditorProps) => {
         className="p-1 rounded hover:bg-red-50 text-red-600"
         title="Remove link"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
@@ -205,8 +167,13 @@ export default function EditDocument() {
   const [aiMessages, setAiMessages] = useState<AIAssistantMessage[]>([]);
   const [aiPrompt, setAiPrompt] = useState("");
   const [content, setContent] = useState<string>("");
+  const editor = useCustomEditor(content, (html) => {
+    setContent(html);
+  });
   const [autoComplete, setAutoComplete] = useState(false);
-  const [currentSuggestion, setCurrentSuggestion] = useState<string | null>(null);
+  const [currentSuggestion, setCurrentSuggestion] = useState<string | null>(
+    null
+  );
   const [suggestionPos, setSuggestionPos] = useState<number | null>(null);
   const [showSuggestionControls, setShowSuggestionControls] = useState(false);
   const [suggestionPosition, setSuggestionPosition] = useState({ x: 0, y: 0 });
@@ -214,26 +181,29 @@ export default function EditDocument() {
   const [showSizeDropdown, setShowSizeDropdown] = useState(false);
   const [showLinkEditor, setShowLinkEditor] = useState(false);
   const [isEditorReady, setIsEditorReady] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'seo'>('chat');
+  const [activeTab, setActiveTab] = useState<"chat" | "seo">("chat");
   const [seoAnalysis, setSeoAnalysis] = useState<SEOAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
-  
+
   useEffect(() => {
     const fetchDocumentAction = async () => {
-      if(!user) return;
+      if (!user) return;
       try {
         const document = await fetchDocument(params.id as string);
         if (!document) {
           router.push("/documents");
           return;
         }
-        
-        if(String(document.id) !== String(params.id) || String(document.owner) !== String(user.id)) {
-          window.location.href = '/documents';
+
+        if (
+          String(document.id) !== String(params.id) ||
+          String(document.owner) !== String(user.id)
+        ) {
+          window.location.href = "/documents";
           return;
         }
-        
+
         setDocumentTitle(document.title);
         setContent(document.content);
         setIsLoading(false);
@@ -247,41 +217,13 @@ export default function EditDocument() {
     fetchDocumentAction();
   }, [params.id, router, user]);
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Document,
-      Paragraph,
-      Text,
-      Heading.configure({
-        levels: [1, 2, 3],
-      }),
-      TextStyle,
-      FontSize,
-      Suggestion,
-      Underline,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-blue-600 hover:underline cursor-pointer',
-        },
-      }),
-    ],
-    content: content,
-    editorProps: {
-      attributes: {
-        class: "prose prose-lg max-w-none focus:outline-none",
-      }
-    }
-  });
-
   const acceptSuggestion = useCallback(() => {
     if (!currentSuggestion || suggestionPos === null || !editor) return;
-    
+
     const tr = editor.state.tr;
     tr.removeMark(suggestionPos, suggestionPos + currentSuggestion.length);
     editor.view.dispatch(tr);
-    
+
     setCurrentSuggestion(null);
     setSuggestionPos(null);
     setShowSuggestionControls(false);
@@ -289,13 +231,13 @@ export default function EditDocument() {
 
   const declineSuggestion = useCallback(() => {
     if (!currentSuggestion || suggestionPos === null || !editor) return;
-    
+
     const tr = editor.state.tr.delete(
       suggestionPos,
       suggestionPos + currentSuggestion.length
     );
     editor.view.dispatch(tr);
-    
+
     setCurrentSuggestion(null);
     setSuggestionPos(null);
     setShowSuggestionControls(false);
@@ -309,7 +251,7 @@ export default function EditDocument() {
   }, [content, editor]);
 
   const handleSave = useCallback(async () => {
-    if(!user) return;
+    if (!user) return;
     setIsSaving(true);
     try {
       const saveableDocument: DocumentType = {
@@ -336,153 +278,88 @@ export default function EditDocument() {
     };
     setAiPrompt("");
     setAiMessages((prevMessages) => [...prevMessages, newMessage]);
-    
+
     const documentContext = {
       title: documentTitle,
       content: editor?.getHTML() || "",
-      selection: editor?.state.selection.content().content.size 
+      selection: editor?.state.selection.content().content.size
         ? editor?.state.selection.content().content.toJSON()
-        : null
+        : null,
     };
 
-    const aiResponse = await aiChatbot([...aiMessages, newMessage], documentContext);
+    const aiResponse = await aiChatbot(
+      [...aiMessages, newMessage],
+      documentContext
+    );
     if (!aiResponse) return;
-    
+
     const newAiMessage: AIAssistantMessage = {
       role: "assistant",
       content: aiResponse,
       timestamp: new Date(),
-      canApply: true
+      canApply: true,
     };
     setAiMessages((prevMessages) => [...prevMessages, newAiMessage]);
   }, [aiPrompt, aiMessages, documentTitle, editor]);
 
-  const handleApplyAISuggestion = useCallback((messageIndex: number) => {
-    const message = aiMessages[messageIndex];
-    if (!message || message.role !== "assistant" || !editor) return;
+  const handleApplyAISuggestion = useCallback(
+    (messageIndex: number) => {
+      const message = aiMessages[messageIndex];
+      if (!message || message.role !== "assistant" || !editor) return;
 
-    if (editor.state.selection.content().content.size) {
-      editor.commands.insertContentAt(editor.state.selection.from, message.content);
-    } else {
-      editor.commands.insertContent(message.content);
+      if (editor.state.selection.content().content.size) {
+        editor.commands.insertContentAt(
+          editor.state.selection.from,
+          message.content
+        );
+      } else {
+        editor.commands.insertContent(message.content);
+      }
+    },
+    [aiMessages, editor]
+  );
+
+  const handleCopyAISuggestion = useCallback(
+    (messageIndex: number) => {
+      const message = aiMessages[messageIndex];
+      if (!message) return;
+      navigator.clipboard.writeText(message.content);
+    },
+    [aiMessages]
+  );
+
+  useEditorAutocomplete({
+    editor,
+    autoComplete,
+    documentTitle,
+    currentSuggestion,
+    suggestionPos,
+    acceptSuggestion,
+    declineSuggestion,
+    lastSuggestionTime,
+    setCurrentSuggestion,
+    setSuggestionPos,
+    setShowSuggestionControls,
+    setSuggestionPosition,
+    setLastSuggestionTime,
+  });
+
+  useEffect(() => {
+    const styleId = "textify-editor-styles";
+    if (document.getElementById(styleId)) {
+      return;
     }
-  }, [aiMessages, editor]);
 
-  const handleCopyAISuggestion = useCallback((messageIndex: number) => {
-    const message = aiMessages[messageIndex];
-    if (!message) return;
-    navigator.clipboard.writeText(message.content);
-  }, [aiMessages]);
-
-  useEffect(() => {
-    if (!editor || !autoComplete) return;
-
-    let timeout: NodeJS.Timeout;
-    let lastKeyWasSpace = false;
-    
-    const handleAutoComplete = async () => {
-      const now = Date.now();
-      const timeSinceLastSuggestion = now - lastSuggestionTime;
-      if (timeSinceLastSuggestion < 60000) {
-        return;
-      }
-
-      const { from } = editor.state.selection;
-      const currentContent = editor.state.doc.textBetween(Math.max(0, from - 100), from);
-      
-      if (currentContent.length < 5) {
-        setCurrentSuggestion(null);
-        setSuggestionPos(null);
-        setShowSuggestionControls(false);
-        return;
-      }
-
-      try {
-        const documentContext = {
-          title: documentTitle,
-          content: editor.getHTML(),
-          selection: null
-        };
-
-        const completion = await getAutoCompletion(currentContent, documentContext);
-        if (completion && editor) {
-          setLastSuggestionTime(now);
-          setCurrentSuggestion(completion);
-          setSuggestionPos(from);
-
-          // Insert suggestion with mark
-          const tr = editor.state.tr.insertText(completion, from);
-          tr.addMark(
-            from,
-            from + completion.length,
-            editor.schema.marks.suggestion.create()
-          );
-          editor.view.dispatch(tr);
-
-          // Get position for controls
-          const coords = editor.view.coordsAtPos(from);
-          setSuggestionPosition({ x: coords.left, y: coords.bottom });
-          setShowSuggestionControls(true);
-        }
-      } catch (error) {
-        console.error('Auto-completion error:', error);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Tab' && currentSuggestion && suggestionPos !== null) {
-        event.preventDefault();
-        acceptSuggestion();
-      } else if (event.key === 'Escape') {
-        event.preventDefault();
-        declineSuggestion();
-      } else if (event.key === ' ') {
-        lastKeyWasSpace = true;
-      }
-    };
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === 'Tab' || event.key === 'Escape') return;
-      
-      // Don't trigger autocompletion on space
-      if (event.key === ' ') {
-        lastKeyWasSpace = false;
-        return;
-      }
-
-      // Only clear suggestion if it wasn't a space and we're actually typing
-      if (!lastKeyWasSpace && event.key.length === 1 && currentSuggestion && suggestionPos !== null) {
-        declineSuggestion();
-      }
-      
-      clearTimeout(timeout);
-      if (!lastKeyWasSpace) {
-        timeout = setTimeout(handleAutoComplete, 1000);
-      }
-    };
-
-    const editorElement = editor.view.dom;
-    editorElement.addEventListener('keyup', handleKeyUp);
-    editorElement.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      editorElement.removeEventListener('keyup', handleKeyUp);
-      editorElement.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(timeout);
-    };
-  }, [editor, autoComplete, documentTitle, currentSuggestion, suggestionPos, acceptSuggestion, declineSuggestion, lastSuggestionTime]);
-
-  // Add styles for suggestions
-  useEffect(() => {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
+    style.id = styleId;
     style.textContent = `
       .suggestion {
         color: #9CA3AF;
         opacity: 0;
-        animation: fadeIn 0.3s ease-in-out forwards;
+        animation: textify-fade-in 0.3s ease-in-out forwards;
       }
       
-      @keyframes fadeIn {
+      @keyframes textify-fade-in {
         from {
           opacity: 0;
           transform: translateX(-5px);
@@ -520,8 +397,12 @@ export default function EditDocument() {
       }
     `;
     document.head.appendChild(style);
+
     return () => {
-      document.head.removeChild(style);
+      const existingStyle = document.getElementById(styleId);
+      if (existingStyle && existingStyle.parentNode) {
+        existingStyle.parentNode.removeChild(existingStyle);
+      }
     };
   }, []);
 
@@ -540,24 +421,24 @@ export default function EditDocument() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.text-size-dropdown')) {
+      if (!target.closest(".text-size-dropdown")) {
         setShowSizeDropdown(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSEOAnalysis = async () => {
     if (!editor) return;
-    
+
     setIsAnalyzing(true);
     try {
       const analysis = await analyzeSEO(editor.getHTML(), documentTitle);
       setSeoAnalysis(analysis);
     } catch (error) {
-      console.error('Error analyzing SEO:', error);
+      console.error("Error analyzing SEO:", error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -565,30 +446,36 @@ export default function EditDocument() {
 
   const handleSEOOptimize = async () => {
     if (!editor) return;
-    
+
     setIsOptimizing(true);
     try {
-      const { optimizedContent, changes } = await optimizeContent(editor.getHTML(), documentTitle);
-      
-      // Apply the optimized content
+      const { optimizedContent, changes } = await optimizeContent(
+        editor.getHTML(),
+        documentTitle
+      );
+
       editor.commands.setContent(optimizedContent);
-      
-      // Add optimization changes to AI messages
-      const changeMessage = changes.map(change => 
-        `Changed: "${change.original}" to "${change.suggestion}"\nReason: ${change.reason}`
-      ).join('\n\n');
-      
-      setAiMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `Applied SEO Optimizations:\n\n${changeMessage}`,
-        timestamp: new Date(),
-        canApply: false
-      }]);
-      
+      const changeMessage = changes
+        .map(
+          (change) =>
+            `Changed: "${change.original}" to "${change.suggestion}"\nReason: ${change.reason}`
+        )
+        .join("\n\n");
+
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `Applied SEO Optimizations:\n\n${changeMessage}`,
+          timestamp: new Date(),
+          canApply: false,
+        },
+      ]);
+
       // Trigger a new analysis
       handleSEOAnalysis();
     } catch (error) {
-      console.error('Error optimizing content:', error);
+      console.error("Error optimizing content:", error);
     } finally {
       setIsOptimizing(false);
     }
@@ -606,8 +493,8 @@ export default function EditDocument() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="fixed top-24 left-0 right-0 bg-white border-b border-gray-200 z-10">
+    <div className="flex flex-col h-full">
+      <div className="relative bg-white pt-2 border-b border-gray-200 z-10 overflow-hidden">
         <div className="container mx-auto px-4 text-gray-800">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-4">
@@ -669,18 +556,38 @@ export default function EditDocument() {
 
           {/* Editor Controls */}
           {editor && (
-            <div className="flex items-center space-x-2 py-2 border-t border-gray-200">
+            <div className="flex items-center space-x-2 py-2 border-t border-gray-200 relative">
               <div className="relative text-size-dropdown">
                 <button
                   onClick={() => setShowSizeDropdown(!showSizeDropdown)}
                   className="p-2 rounded hover:bg-gray-100 flex items-center"
                   title="Text size"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
                   </svg>
-                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <svg
+                    className="w-4 h-4 ml-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
                 {showSizeDropdown && (
@@ -689,11 +596,17 @@ export default function EditDocument() {
                       <button
                         key={size.class}
                         onClick={() => {
-                          editor.chain().focus().setMark('fontSize', { class: size.class }).run();
+                          editor
+                            .chain()
+                            .focus()
+                            .setMark("fontSize", { class: size.class })
+                            .run();
                           setShowSizeDropdown(false);
                         }}
                         className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
-                          editor.isActive('fontSize', { class: size.class }) ? 'bg-gray-100' : ''
+                          editor.isActive("fontSize", { class: size.class })
+                            ? "bg-gray-100"
+                            : ""
                         }`}
                       >
                         <span className={size.class}>{size.name}</span>
@@ -710,8 +623,18 @@ export default function EditDocument() {
                 }`}
                 title="Bold (Ctrl+B)"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12h8a4 4 0 100-8H6v8zm0 0h8a4 4 0 110 8H6v-8z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 12h8a4 4 0 100-8H6v8zm0 0h8a4 4 0 110 8H6v-8z"
+                  />
                 </svg>
               </button>
               <button
@@ -721,8 +644,18 @@ export default function EditDocument() {
                 }`}
                 title="Italic (Ctrl+I)"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                  />
                 </svg>
               </button>
               <button
@@ -732,8 +665,18 @@ export default function EditDocument() {
                 }`}
                 title="Underline (Ctrl+U)"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 19h14M7 3v8a5 5 0 0010 0V3" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 12h14M5 19h14M7 3v8a5 5 0 0010 0V3"
+                  />
                 </svg>
               </button>
               <button
@@ -743,8 +686,18 @@ export default function EditDocument() {
                 }`}
                 title="Strikethrough"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M9 5l-4 4 4 4M15 5l4 4-4 4" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 12h14M9 5l-4 4 4 4M15 5l4 4-4 4"
+                  />
                 </svg>
               </button>
               <div className="w-px h-6 bg-gray-200 mx-2" />
@@ -755,12 +708,29 @@ export default function EditDocument() {
                 }`}
                 title="Normal text"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </button>
               <button
-                onClick={() => editor.chain().focus().clearNodes().setHeading({ level: 1 }).run()}
+                onClick={() =>
+                  editor
+                    .chain()
+                    .focus()
+                    .clearNodes()
+                    .setHeading({ level: 1 })
+                    .run()
+                }
                 className={`p-2 rounded hover:bg-gray-100 ${
                   editor.isActive("heading", { level: 1 }) ? "bg-gray-100" : ""
                 }`}
@@ -769,7 +739,14 @@ export default function EditDocument() {
                 H1
               </button>
               <button
-                onClick={() => editor.chain().focus().clearNodes().setHeading({ level: 2 }).run()}
+                onClick={() =>
+                  editor
+                    .chain()
+                    .focus()
+                    .clearNodes()
+                    .setHeading({ level: 2 })
+                    .run()
+                }
                 className={`p-2 rounded hover:bg-gray-100 ${
                   editor.isActive("heading", { level: 2 }) ? "bg-gray-100" : ""
                 }`}
@@ -778,7 +755,14 @@ export default function EditDocument() {
                 H2
               </button>
               <button
-                onClick={() => editor.chain().focus().clearNodes().setHeading({ level: 3 }).run()}
+                onClick={() =>
+                  editor
+                    .chain()
+                    .focus()
+                    .clearNodes()
+                    .setHeading({ level: 3 })
+                    .run()
+                }
                 className={`p-2 rounded hover:bg-gray-100 ${
                   editor.isActive("heading", { level: 3 }) ? "bg-gray-100" : ""
                 }`}
@@ -794,8 +778,18 @@ export default function EditDocument() {
                 }`}
                 title="Bullet List"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </button>
               <button
@@ -805,8 +799,18 @@ export default function EditDocument() {
                 }`}
                 title="Numbered List"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20h14M7 12h14M7 4h14M3 20h.01M3 12h.01M3 4h.01" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 20h14M7 12h14M7 4h14M3 20h.01M3 12h.01M3 4h.01"
+                  />
                 </svg>
               </button>
               <button
@@ -816,8 +820,18 @@ export default function EditDocument() {
                 }`}
                 title="Quote"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
                 </svg>
               </button>
               <button
@@ -825,8 +839,18 @@ export default function EditDocument() {
                 className="p-2 rounded hover:bg-gray-100"
                 title="Horizontal Line"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 12h16"
+                  />
                 </svg>
               </button>
             </div>
@@ -835,14 +859,14 @@ export default function EditDocument() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 pt-52">
+      <div className="container mx-auto px-4">
         <div className="flex">
           {/* Editor */}
-          <div className={`flex-1 ${showAIPanel ? "mr-4" : ""}`}>
+          <div className={`flex-1 pt-4 ${showAIPanel ? "mr-4" : ""}`}>
             {isEditorReady && (
-              <EditorContent 
-                editor={editor} 
-                className="prose prose-sm w-full max-w-full mt-4"
+              <DynamicEditor
+                content={content}
+                onUpdate={(html) => setContent(html)}
               />
             )}
           </div>
@@ -852,28 +876,28 @@ export default function EditDocument() {
               <div className="p-4">
                 <div className="flex border-b border-gray-200 mb-4">
                   <button
-                    onClick={() => setActiveTab('chat')}
+                    onClick={() => setActiveTab("chat")}
                     className={`px-4 py-2 text-sm font-medium ${
-                      activeTab === 'chat'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-600 hover:text-gray-800'
+                      activeTab === "chat"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-800"
                     }`}
                   >
                     Chat
                   </button>
                   <button
-                    onClick={() => setActiveTab('seo')}
+                    onClick={() => setActiveTab("seo")}
                     className={`px-4 py-2 text-sm font-medium ${
-                      activeTab === 'seo'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-600 hover:text-gray-800'
+                      activeTab === "seo"
+                        ? "text-blue-600 border-b-2 border-blue-600"
+                        : "text-gray-600 hover:text-gray-800"
                     }`}
                   >
                     SEO Optimization
                   </button>
                 </div>
 
-                {activeTab === 'chat' ? (
+                {activeTab === "chat" ? (
                   <>
                     <div className="space-y-4 mb-4 h-[calc(100vh-400px)] overflow-y-auto">
                       {aiMessages.map((message, index) => (
@@ -885,7 +909,9 @@ export default function EditDocument() {
                               : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <p className="text-sm whitespace-pre-wrap">
+                            {message.content}
+                          </p>
                           <div className="flex items-center justify-between mt-2">
                             <span className="text-xs text-gray-500">
                               {message.timestamp.toLocaleTimeString()}
@@ -900,7 +926,9 @@ export default function EditDocument() {
                                 </button>
                                 {message.canApply && (
                                   <button
-                                    onClick={() => handleApplyAISuggestion(index)}
+                                    onClick={() =>
+                                      handleApplyAISuggestion(index)
+                                    }
                                     className="text-xs px-2 py-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors"
                                   >
                                     Apply
@@ -939,11 +967,13 @@ export default function EditDocument() {
                 ) : (
                   <div className="space-y-4">
                     <div className="p-4 bg-blue-50 rounded-lg">
-                      <h4 className="text-sm font-medium text-blue-800 mb-2">SEO Score</h4>
+                      <h4 className="text-sm font-medium text-blue-800 mb-2">
+                        SEO Score
+                      </h4>
                       <div className="flex items-center space-x-2">
                         <div className="w-full bg-blue-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
+                          <div
+                            className="bg-blue-600 h-2 rounded-full"
                             style={{ width: `${seoAnalysis?.score ?? 0}%` }}
                           />
                         </div>
@@ -954,83 +984,153 @@ export default function EditDocument() {
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-medium text-gray-800 mb-2">Recommendations</h4>
+                      <h4 className="text-sm font-medium text-gray-800 mb-2">
+                        Recommendations
+                      </h4>
                       <div className="space-y-2">
-                        {seoAnalysis?.recommendations.map((rec: { type: 'success' | 'warning' | 'error'; message: string; details?: string }, index: number) => (
-                          <div 
-                            key={index} 
-                            className={`p-3 rounded-lg ${
-                              rec.type === 'success' ? 'bg-green-50' :
-                              rec.type === 'warning' ? 'bg-yellow-50' : 'bg-red-50'
-                            }`}
-                          >
-                            <div className="flex items-start">
-                              <svg 
-                                className={`w-5 h-5 mt-0.5 ${
-                                  rec.type === 'success' ? 'text-green-600' :
-                                  rec.type === 'warning' ? 'text-yellow-600' : 'text-red-600'
-                                }`} 
-                                fill="none" 
-                                stroke="currentColor" 
-                                viewBox="0 0 24 24"
-                              >
-                                {rec.type === 'success' ? (
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                ) : rec.type === 'warning' ? (
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                ) : (
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                )}
-                              </svg>
-                              <div className="ml-3">
-                                <p className={`text-sm ${
-                                  rec.type === 'success' ? 'text-green-800' :
-                                  rec.type === 'warning' ? 'text-yellow-800' : 'text-red-800'
-                                }`}>
-                                  {rec.message}
-                                </p>
-                                {rec.details && (
-                                  <p className={`text-xs mt-1 ${
-                                    rec.type === 'success' ? 'text-green-600' :
-                                    rec.type === 'warning' ? 'text-yellow-600' : 'text-red-600'
-                                  }`}>
-                                    {rec.details}
+                        {seoAnalysis?.recommendations.map(
+                          (
+                            rec: {
+                              type: "success" | "warning" | "error";
+                              message: string;
+                              details?: string;
+                            },
+                            index: number
+                          ) => (
+                            <div
+                              key={index}
+                              className={`p-3 rounded-lg ${
+                                rec.type === "success"
+                                  ? "bg-green-50"
+                                  : rec.type === "warning"
+                                  ? "bg-yellow-50"
+                                  : "bg-red-50"
+                              }`}
+                            >
+                              <div className="flex items-start">
+                                <svg
+                                  className={`w-5 h-5 mt-0.5 ${
+                                    rec.type === "success"
+                                      ? "text-green-600"
+                                      : rec.type === "warning"
+                                      ? "text-yellow-600"
+                                      : "text-red-600"
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  {rec.type === "success" ? (
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  ) : rec.type === "warning" ? (
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                    />
+                                  ) : (
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  )}
+                                </svg>
+                                <div className="ml-3">
+                                  <p
+                                    className={`text-sm ${
+                                      rec.type === "success"
+                                        ? "text-green-800"
+                                        : rec.type === "warning"
+                                        ? "text-yellow-800"
+                                        : "text-red-800"
+                                    }`}
+                                  >
+                                    {rec.message}
                                   </p>
-                                )}
+                                  {rec.details && (
+                                    <p
+                                      className={`text-xs mt-1 ${
+                                        rec.type === "success"
+                                          ? "text-green-600"
+                                          : rec.type === "warning"
+                                          ? "text-yellow-600"
+                                          : "text-red-600"
+                                      }`}
+                                    >
+                                      {rec.details}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        )}
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-medium text-gray-800 mb-2">Keyword Analysis</h4>
+                      <h4 className="text-sm font-medium text-gray-800 mb-2">
+                        Keyword Analysis
+                      </h4>
                       <div className="space-y-2">
                         <div className="p-4 bg-gray-50 rounded-lg">
                           <div className="mb-4">
-                            <span className="text-sm font-medium text-gray-700">Primary Keyword</span>
+                            <span className="text-sm font-medium text-gray-700">
+                              Primary Keyword
+                            </span>
                             <div className="mt-1 flex items-center justify-between">
                               <span className="text-sm text-gray-600">
                                 {seoAnalysis?.keywordAnalysis.primary.keyword}
                               </span>
                               <span className="text-sm font-medium text-gray-800">
-                                {seoAnalysis?.keywordAnalysis.primary.occurrences} occurrences 
-                                ({(seoAnalysis?.keywordAnalysis.primary.density ?? 0).toFixed(2)}%)
+                                {
+                                  seoAnalysis?.keywordAnalysis.primary
+                                    .occurrences
+                                }{" "}
+                                occurrences (
+                                {(
+                                  seoAnalysis?.keywordAnalysis.primary
+                                    .density ?? 0
+                                ).toFixed(2)}
+                                %)
                               </span>
                             </div>
                           </div>
                           <div>
-                            <span className="text-sm font-medium text-gray-700">Secondary Keywords</span>
-                            {seoAnalysis?.keywordAnalysis.secondary.map((keyword: { keyword: string; occurrences: number; density: number }, index: number) => (
-                              <div key={index} className="mt-2 flex items-center justify-between">
-                                <span className="text-sm text-gray-600">{keyword.keyword}</span>
-                                <span className="text-sm font-medium text-gray-800">
-                                  {keyword.occurrences} occurrences 
-                                  ({keyword.density.toFixed(2)}%)
-                                </span>
-                              </div>
-                            ))}
+                            <span className="text-sm font-medium text-gray-700">
+                              Secondary Keywords
+                            </span>
+                            {seoAnalysis?.keywordAnalysis.secondary.map(
+                              (
+                                keyword: {
+                                  keyword: string;
+                                  occurrences: number;
+                                  density: number;
+                                },
+                                index: number
+                              ) => (
+                                <div
+                                  key={index}
+                                  className="mt-2 flex items-center justify-between"
+                                >
+                                  <span className="text-sm text-gray-600">
+                                    {keyword.keyword}
+                                  </span>
+                                  <span className="text-sm font-medium text-gray-800">
+                                    {keyword.occurrences} occurrences (
+                                    {keyword.density.toFixed(2)}%)
+                                  </span>
+                                </div>
+                              )
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1042,14 +1142,14 @@ export default function EditDocument() {
                         disabled={isAnalyzing}
                         className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
                       >
-                        {isAnalyzing ? 'Analyzing...' : 'Analyze Content'}
+                        {isAnalyzing ? "Analyzing..." : "Analyze Content"}
                       </button>
                       <button
                         onClick={handleSEOOptimize}
                         disabled={isOptimizing}
                         className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                       >
-                        {isOptimizing ? 'Optimizing...' : 'Optimize Content'}
+                        {isOptimizing ? "Optimizing..." : "Optimize Content"}
                       </button>
                     </div>
                   </div>
@@ -1062,7 +1162,7 @@ export default function EditDocument() {
 
       {/* Suggestion Controls */}
       {showSuggestionControls && (
-        <div 
+        <div
           className="fixed z-50 flex items-center space-x-2 bg-white rounded-lg shadow-lg px-2 py-1 transition-opacity duration-200"
           style={{
             left: suggestionPosition.x,
@@ -1074,8 +1174,18 @@ export default function EditDocument() {
             className="p-1 rounded hover:bg-blue-50 text-blue-600"
             title="Accept (Tab)"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           </button>
           <button
@@ -1083,17 +1193,27 @@ export default function EditDocument() {
             className="p-1 rounded hover:bg-red-50 text-red-600"
             title="Decline (Esc)"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
       )}
 
       {editor && (
-        <BubbleMenu 
-          editor={editor} 
-          shouldShow={({ editor }) => editor.isActive('link')}
+        <BubbleMenu
+          editor={editor}
+          shouldShow={({ editor }) => editor.isActive("link")}
           tippyOptions={{ duration: 100 }}
         >
           <div className="bg-white rounded-lg shadow-lg p-2">
@@ -1112,19 +1232,19 @@ export default function EditDocument() {
           </div>
         </BubbleMenu>
       )}
-      
+
       {/* Show link editor when button is clicked */}
       {showLinkEditor && editor && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-4">
-            <LinkEditor 
-              editor={editor} 
-              isOpen={showLinkEditor} 
-              setIsOpen={setShowLinkEditor} 
+            <LinkEditor
+              editor={editor}
+              isOpen={showLinkEditor}
+              setIsOpen={setShowLinkEditor}
             />
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
