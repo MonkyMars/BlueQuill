@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { Editor } from "@tiptap/core";
 import { getAutoCompletion } from "@/utils/document/AIchat";
 
@@ -33,76 +33,62 @@ export const useEditorAutocomplete = ({
   setSuggestionPosition,
   setLastSuggestionTime,
 }: AutoCompleteProps) => {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lastKeyWasSpace = useRef(false);
+  const mounted = useRef(true);
+
   const insertSuggestion = useCallback(
     async (completion: string, from: number) => {
+      console.log("Inserting suggestion:", completion, from);
       if (!editor?.view?.state) return;
-
+  
       try {
         const sanitizedCompletion = completion
           .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
-          .replace(/\uFFFD/g, ""); 
-
+          .replace(/\uFFFD/g, "");
+  
         if (!sanitizedCompletion) return;
-
-        // Get the current selection and document size
+  
         const { state } = editor.view;
         const docSize = state.doc.content.size;
-
-        // Ensure the position is valid
+  
         if (from < 0 || from > docSize) {
           console.error("Invalid position for suggestion insertion:", from);
           return;
         }
-
-        // Create a new transaction
+  
+        // Create a SINGLE transaction for all changes
         const tr = state.tr;
-
-        // First, remove any existing suggestion marks in the document
         const suggestionMark = editor.schema.marks.suggestion;
+  
+        // 1. Remove existing suggestion marks
         if (suggestionMark) {
-          const marks = state.doc.resolve(from).marks();
-          if (marks.length > 0) {
-            tr.removeMark(0, docSize, suggestionMark);
-          }
+          tr.removeMark(0, docSize, suggestionMark);
         }
-
-        // Apply changes in sequence
+  
+        // 2. Insert text
+        tr.insertText(sanitizedCompletion, from);
+  
+        // 3. Add new suggestion mark
+        if (suggestionMark) {
+          const mark = suggestionMark.create();
+          tr.addMark(from, from + sanitizedCompletion.length, mark);
+        }
+  
+        // Dispatch all changes in one transaction
         editor.view.dispatch(tr);
-
-        // Create a new transaction for text insertion
-        const insertTr = editor.view.state.tr;
-
-        // Insert the sanitized text
-        insertTr.insertText(sanitizedCompletion, from);
-
-        // Apply text insertion
-        editor.view.dispatch(insertTr);
-
-        // Create a new transaction for mark application
-        const markTr = editor.view.state.tr;
-
-        // Create and apply the suggestion mark
-        const mark = editor.schema.marks.suggestion.create();
-        markTr.addMark(from, from + sanitizedCompletion.length, mark);
-
-        // Apply mark
-        editor.view.dispatch(markTr);
-
-        // Update suggestion controls position after the DOM has updated
+  
         requestAnimationFrame(() => {
           if (!editor?.view?.coordsAtPos) return;
-
+  
           try {
             const coords = editor.view.coordsAtPos(from);
             if (coords) {
-              console.log("Suggestion position:", coords);
               setSuggestionPosition({
                 x: Math.max(0, coords.left),
                 y: Math.max(0, coords.bottom + window.scrollY),
               });
               setShowSuggestionControls(true);
-            } else {
-              console.error("Coords not found for position:", from);
             }
           } catch (error) {
             console.error("Error calculating suggestion position:", error);
@@ -118,20 +104,24 @@ export const useEditorAutocomplete = ({
   );
 
   useEffect(() => {
-    if (!editor || !autoComplete) return;
-    console.log("Autocomplete triggered!");
-    let timeout: ReturnType<typeof setTimeout>;
-    let lastKeyWasSpace = false;
-    let mounted = true;
+    console.log("Auto-complete effect triggered!");
+    if (!editor || !autoComplete || !editor.view.dom) {
+      console.log("Skipping auto-complete setup - editor not ready:", editor?.view.dom);
+      return;
+    }
+
+    const editorElement = editor.view.dom;
+    console.log("Attaching listeners to:", editorElement);
 
     const handleAutoComplete = async () => {
+      console.log("Handle auto-complete called");
       const now = Date.now();
       const timeSinceLastSuggestion = now - lastSuggestionTime;
       if (timeSinceLastSuggestion < 60000) {
         console.log("Too soon for auto-completion.");
         return;
-      };
-
+      }
+    
       const { from } = editor.state.selection;
       const docSize = editor.state.doc.nodeSize - 2;
       console.log("Selection for auto-completion:", from);
@@ -142,12 +132,12 @@ export const useEditorAutocomplete = ({
         console.log("Invalid selection for auto-completion.");
         return;
       }
-
+    
       const currentContent = editor.state.doc.textBetween(
         Math.max(0, from - 100),
         from
       );
-
+    
       if (currentContent.length < 5) {
         setCurrentSuggestion(null);
         setSuggestionPos(null);
@@ -155,6 +145,7 @@ export const useEditorAutocomplete = ({
         console.log("Content too short for auto-completion.");
         return;
       }
+    
       console.log("Content for auto-completion:", currentContent);
       try {
         const documentContext = {
@@ -168,17 +159,16 @@ export const useEditorAutocomplete = ({
           documentContext
         );
         console.log("Auto-completion result:", completion);
-        if (!mounted || !completion || !editor) return;
-
+        if (!mounted.current || !completion || !editor) return;
+    
         setLastSuggestionTime(now);
         setCurrentSuggestion(completion);
         setSuggestionPos(from);
-
-        const insert = await insertSuggestion(completion, from);
-        console.log("Insert suggestion result:", insert);
+    
+        await insertSuggestion(completion, from);
       } catch (error) {
         console.error("Auto-completion error:", error);
-        if (mounted) {
+        if (mounted.current) {
           setCurrentSuggestion(null);
           setSuggestionPos(null);
           setShowSuggestionControls(false);
@@ -187,59 +177,70 @@ export const useEditorAutocomplete = ({
       }
     };
 
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (!mounted.current) return;
+      console.log("KeyUp event triggered:", event.key);
+    
+      if (timeoutRef.current !== undefined) {
+        clearTimeout(timeoutRef.current);
+      }
+    
+      if (event.key.length > 1 || event.metaKey || event.ctrlKey) {
+        return;
+      }
+    
+      if (event.key === " ") {
+        lastKeyWasSpace.current = false;
+        return;
+      }
+    
+      // Decline suggestion only if we have an active one
+      if (currentSuggestion && suggestionPos !== null) {
+        declineSuggestion();
+      }
+    
+      timeoutRef.current = setTimeout(() => {
+        if (mounted.current) {
+          console.log("Triggering auto-complete after typing pause");
+          handleAutoComplete();
+        }
+      }, 1000);
+    };
+    
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!mounted) return;
+      if (!mounted.current) return;
+      console.log("KeyDown event triggered:", event.key);
+    
 
       if (event.key === "Tab" && currentSuggestion && suggestionPos !== null) {
         event.preventDefault();
         acceptSuggestion();
-      } else if (event.key === "Escape") {
-        event.preventDefault();
-        declineSuggestion();
-      } else if (event.key === " ") {
-        lastKeyWasSpace = true;
-      }
-    };
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (!mounted) return;
-
-      if (event.key === "Tab" || event.key === "Escape") return;
-
-      if (event.key === " ") {
-        lastKeyWasSpace = false;
         return;
       }
-
-      if (
-        !lastKeyWasSpace &&
-        event.key.length === 1 &&
-        currentSuggestion &&
-        suggestionPos !== null
-      ) {
+    
+      if (event.key === "Escape") {
+        event.preventDefault();
         declineSuggestion();
+        return;
       }
-
-      clearTimeout(timeout);
-      if (!lastKeyWasSpace) {
-        timeout = setTimeout(() => handleAutoComplete(), 1000);
+    
+      if (event.key === " ") {
+        lastKeyWasSpace.current = true;
       }
     };
 
-    if (editor?.view?.dom) {
-      const editorElement = editor.view.dom;
-      editorElement.addEventListener("keyup", handleKeyUp);
-      editorElement.addEventListener("keydown", handleKeyDown);
-    }
+    // Add event listeners
+    editorElement.addEventListener("keyup", handleKeyUp);
+    editorElement.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      mounted = false;
-      clearTimeout(timeout);
-      if (editor?.view?.dom) {
-        const editorElement = editor.view.dom;
-        editorElement.removeEventListener("keyup", handleKeyUp);
-        editorElement.removeEventListener("keydown", handleKeyDown);
+      console.log("Cleaning up auto-complete");
+      mounted.current = false;
+      if (timeoutRef.current !== undefined) {
+        clearTimeout(timeoutRef.current);
       }
+      editorElement.removeEventListener("keyup", handleKeyUp);
+      editorElement.removeEventListener("keydown", handleKeyDown);
     };
   }, [
     editor,

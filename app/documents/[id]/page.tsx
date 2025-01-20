@@ -328,22 +328,22 @@ export default function EditDocument() {
     },
     [aiMessages]
   );
-
-  useEditorAutocomplete({
-    editor,
-    autoComplete,
-    documentTitle,
-    currentSuggestion,
-    suggestionPos,
-    acceptSuggestion,
-    declineSuggestion,
-    lastSuggestionTime,
-    setCurrentSuggestion,
-    setSuggestionPos,
-    setShowSuggestionControls,
-    setSuggestionPosition,
-    setLastSuggestionTime,
-  });
+  
+useEditorAutocomplete({
+  editor: editor?.isInitialized ? editor : null,
+  autoComplete,
+  documentTitle,
+  currentSuggestion,
+  suggestionPos,
+  acceptSuggestion,
+  declineSuggestion,
+  lastSuggestionTime,
+  setCurrentSuggestion,
+  setSuggestionPos,
+  setShowSuggestionControls,
+  setSuggestionPosition,
+  setLastSuggestionTime,
+});
 
   useEffect(() => {
     const styleId = "textify-editor-styles";
