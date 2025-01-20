@@ -224,7 +224,11 @@ export const useEditorAutocomplete = ({
       return;
       }
     };
-    console.log(editor)
+    console.log(editor) 
+    /* 
+    CURRENT ISSUE: editor.on does not work, might be because the editor is undefined. need to fix. 
+    when typing, 'Editor update event triggered' is not logged to the console. No given errors.
+    */
     editor.on('update', () => {
       console.log("Editor update event triggered");
       if (timeoutRef.current !== undefined) {
