@@ -162,7 +162,13 @@ export const Editor = ({ content, onUpdate }: EditorProps) => {
     },
   });
 
-  if (!editor) {
+  useEffect(() => {
+    if (editor && isMounted && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [editor, content, isMounted]);
+
+  if (!editor || !isMounted) {
     return null;
   }
 

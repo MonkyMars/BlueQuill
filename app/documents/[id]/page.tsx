@@ -167,9 +167,6 @@ export default function EditDocument() {
   const [aiMessages, setAiMessages] = useState<AIAssistantMessage[]>([]);
   const [aiPrompt, setAiPrompt] = useState("");
   const [content, setContent] = useState<string>("");
-  const editor = useCustomEditor(content, (html) => {
-    setContent(html);
-  });
   const [autoComplete, setAutoComplete] = useState(false);
   const [currentSuggestion, setCurrentSuggestion] = useState<string | null>(null);
   const [suggestionPos, setSuggestionPos] = useState<number | null>(null);
@@ -183,6 +180,12 @@ export default function EditDocument() {
   const [seoAnalysis, setSeoAnalysis] = useState<SEOAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
+
+  const editor = useCustomEditor(content, (html) => {
+    if (html !== content) {
+      setContent(html);
+    }
+  });
 
   useEffect(() => {
     const fetchDocumentAction = async () => {
@@ -215,6 +218,12 @@ export default function EditDocument() {
     fetchDocumentAction();
   }, [params.id, router, user]);
 
+  useEffect(() => {
+    if (editor && content && isEditorReady) {
+      editor.commands.setContent(content);
+    }
+  }, [editor, content, isEditorReady]);
+
   const acceptSuggestion = useCallback(() => {
     if (!currentSuggestion || suggestionPos === null || !editor) return;
 
@@ -241,12 +250,6 @@ export default function EditDocument() {
     setShowSuggestionControls(false);
     editor.commands.focus();
   }, [currentSuggestion, suggestionPos, editor]);
-
-  useEffect(() => {
-    if (editor && content) {
-      editor.commands.setContent(content);
-    }
-  }, [content, editor]);
 
   const handleSave = useCallback(async () => {
     if (!user) return;

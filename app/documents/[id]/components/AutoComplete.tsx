@@ -119,7 +119,7 @@ export const useEditorAutocomplete = ({
 
   useEffect(() => {
     if (!editor || !autoComplete) return;
-
+    console.log("Autocomplete triggered!");
     let timeout: ReturnType<typeof setTimeout>;
     let lastKeyWasSpace = false;
     let mounted = true;
@@ -127,15 +127,19 @@ export const useEditorAutocomplete = ({
     const handleAutoComplete = async () => {
       const now = Date.now();
       const timeSinceLastSuggestion = now - lastSuggestionTime;
-      if (timeSinceLastSuggestion < 60000) return;
+      if (timeSinceLastSuggestion < 60000) {
+        console.log("Too soon for auto-completion.");
+        return;
+      };
 
       const { from } = editor.state.selection;
       const docSize = editor.state.doc.nodeSize - 2;
-
+      console.log("Selection for auto-completion:", from);
       if (from < 1 || from > docSize) {
         setCurrentSuggestion(null);
         setSuggestionPos(null);
         setShowSuggestionControls(false);
+        console.log("Invalid selection for auto-completion.");
         return;
       }
 
@@ -148,34 +152,37 @@ export const useEditorAutocomplete = ({
         setCurrentSuggestion(null);
         setSuggestionPos(null);
         setShowSuggestionControls(false);
+        console.log("Content too short for auto-completion.");
         return;
       }
-
+      console.log("Content for auto-completion:", currentContent);
       try {
         const documentContext = {
           title: documentTitle,
           content: editor.getHTML(),
           selection: null,
         };
-
+        console.log("Document context for auto-completion:", documentContext);
         const completion = await getAutoCompletion(
           currentContent,
           documentContext
         );
-
+        console.log("Auto-completion result:", completion);
         if (!mounted || !completion || !editor) return;
 
         setLastSuggestionTime(now);
         setCurrentSuggestion(completion);
         setSuggestionPos(from);
 
-        await insertSuggestion(completion, from);
+        const insert = await insertSuggestion(completion, from);
+        console.log("Insert suggestion result:", insert);
       } catch (error) {
         console.error("Auto-completion error:", error);
         if (mounted) {
           setCurrentSuggestion(null);
           setSuggestionPos(null);
           setShowSuggestionControls(false);
+          console.log("Auto-completion failed.");
         }
       }
     };
@@ -215,7 +222,7 @@ export const useEditorAutocomplete = ({
 
       clearTimeout(timeout);
       if (!lastKeyWasSpace) {
-        timeout = setTimeout(handleAutoComplete, 1000);
+        timeout = setTimeout(() => handleAutoComplete(), 1000);
       }
     };
 
