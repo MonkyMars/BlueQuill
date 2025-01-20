@@ -33,54 +33,55 @@ export const useEditorAutocomplete = ({
   setSuggestionPosition,
   setLastSuggestionTime,
 }: AutoCompleteProps) => {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const lastKeyWasSpace = useRef(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
   const mounted = useRef(true);
 
   const insertSuggestion = useCallback(
     async (completion: string, from: number) => {
       console.log("Inserting suggestion:", completion, from);
       if (!editor?.view?.state) return;
-  
+
       try {
         const sanitizedCompletion = completion
           .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
           .replace(/\uFFFD/g, "");
-  
+
         if (!sanitizedCompletion) return;
-  
+
         const { state } = editor.view;
         const docSize = state.doc.content.size;
-  
+
         if (from < 0 || from > docSize) {
           console.error("Invalid position for suggestion insertion:", from);
           return;
         }
-  
+
         // Create a SINGLE transaction for all changes
         const tr = state.tr;
         const suggestionMark = editor.schema.marks.suggestion;
-  
+
         // 1. Remove existing suggestion marks
         if (suggestionMark) {
           tr.removeMark(0, docSize, suggestionMark);
         }
-  
+
         // 2. Insert text
         tr.insertText(sanitizedCompletion, from);
-  
+
         // 3. Add new suggestion mark
         if (suggestionMark) {
           const mark = suggestionMark.create();
           tr.addMark(from, from + sanitizedCompletion.length, mark);
         }
-  
+
         // Dispatch all changes in one transaction
         editor.view.dispatch(tr);
-  
+
         requestAnimationFrame(() => {
           if (!editor?.view?.coordsAtPos) return;
-  
+
           try {
             const coords = editor.view.coordsAtPos(from);
             if (coords) {
@@ -105,8 +106,12 @@ export const useEditorAutocomplete = ({
 
   useEffect(() => {
     console.log("Auto-complete effect triggered!");
+
     if (!editor || !autoComplete || !editor.view.dom) {
-      console.log("Skipping auto-complete setup - editor not ready:", editor?.view.dom);
+      console.log(
+        "Skipping auto-complete setup - editor not ready:",
+        editor?.view.dom
+      );
       return;
     }
 
@@ -121,7 +126,7 @@ export const useEditorAutocomplete = ({
         console.log("Too soon for auto-completion.");
         return;
       }
-    
+
       const { from } = editor.state.selection;
       const docSize = editor.state.doc.nodeSize - 2;
       console.log("Selection for auto-completion:", from);
@@ -132,12 +137,12 @@ export const useEditorAutocomplete = ({
         console.log("Invalid selection for auto-completion.");
         return;
       }
-    
+
       const currentContent = editor.state.doc.textBetween(
         Math.max(0, from - 100),
         from
       );
-    
+
       if (currentContent.length < 5) {
         setCurrentSuggestion(null);
         setSuggestionPos(null);
@@ -145,7 +150,7 @@ export const useEditorAutocomplete = ({
         console.log("Content too short for auto-completion.");
         return;
       }
-    
+
       console.log("Content for auto-completion:", currentContent);
       try {
         const documentContext = {
@@ -160,11 +165,11 @@ export const useEditorAutocomplete = ({
         );
         console.log("Auto-completion result:", completion);
         if (!mounted.current || !completion || !editor) return;
-    
+
         setLastSuggestionTime(now);
         setCurrentSuggestion(completion);
         setSuggestionPos(from);
-    
+
         await insertSuggestion(completion, from);
       } catch (error) {
         console.error("Auto-completion error:", error);
@@ -180,56 +185,59 @@ export const useEditorAutocomplete = ({
     const handleKeyUp = (event: KeyboardEvent) => {
       if (!mounted.current) return;
       console.log("KeyUp event triggered:", event.key);
-    
+
       if (timeoutRef.current !== undefined) {
-        clearTimeout(timeoutRef.current);
+      clearTimeout(timeoutRef.current);
       }
-    
-      if (event.key.length > 1 || event.metaKey || event.ctrlKey) {
-        return;
+
+      // Skip special keys and modifier combinations
+      if (event.altKey || event.metaKey || event.ctrlKey) {
+      return;
       }
-    
-      if (event.key === " ") {
-        lastKeyWasSpace.current = false;
-        return;
-      }
-    
+
       // Decline suggestion only if we have an active one
       if (currentSuggestion && suggestionPos !== null) {
-        declineSuggestion();
+      declineSuggestion();
       }
-    
+
       timeoutRef.current = setTimeout(() => {
-        if (mounted.current) {
-          console.log("Triggering auto-complete after typing pause");
-          handleAutoComplete();
-        }
+      if (mounted.current) {
+        console.log("Triggering auto-complete after typing pause");
+        handleAutoComplete();
+      }
       }, 1000);
     };
-    
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!mounted.current) return;
       console.log("KeyDown event triggered:", event.key);
-    
 
       if (event.key === "Tab" && currentSuggestion && suggestionPos !== null) {
-        event.preventDefault();
-        acceptSuggestion();
-        return;
+      event.preventDefault();
+      acceptSuggestion();
+      return;
       }
-    
+
       if (event.key === "Escape") {
-        event.preventDefault();
-        declineSuggestion();
-        return;
-      }
-    
-      if (event.key === " ") {
-        lastKeyWasSpace.current = true;
+      event.preventDefault();
+      declineSuggestion();
+      return;
       }
     };
+    console.log(editor)
+    editor.on('update', () => {
+      console.log("Editor update event triggered");
+      if (timeoutRef.current !== undefined) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        if (mounted.current) {
+          handleAutoComplete();
+        }
+      }, 1000);
+    });
 
-    // Add event listeners
     editorElement.addEventListener("keyup", handleKeyUp);
     editorElement.addEventListener("keydown", handleKeyDown);
 
