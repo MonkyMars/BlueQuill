@@ -1,5 +1,5 @@
 export interface DocumentType {
-  id: string; 
+  id: string;
   title: string;
   content: string;
   createdAt?: Date;
@@ -7,4 +7,14 @@ export interface DocumentType {
   owner: string;
   type?: "blog" | "article" | "academic" | "script";
   status?: "draft" | "completed";
+}
+
+export interface ProfileType {
+  created_at: string;
+  email: string;
+  full_name: string;
+  plan: string;
+  role: string;
+  updated_at: string;
+  user_id: string;
 }
