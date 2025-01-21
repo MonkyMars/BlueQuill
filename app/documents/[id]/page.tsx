@@ -12,6 +12,9 @@ import { analyzeSEO, optimizeContent } from "@/utils/document/seo";
 import { useEditorAutocomplete } from "./components/AutoComplete";
 import { useCustomEditor } from "./components/Editor";
 import dynamic from "next/dynamic";
+import { UserPlus, Settings } from "lucide-react";
+import { AutoSaving } from "./components/AutoSaving";
+import InviteModal from "./components/InviteModal";
 
 const DynamicEditor = dynamic(
   () => import("./components/Editor").then((mod) => mod.Editor),
@@ -180,6 +183,7 @@ export default function EditDocument() {
   const [seoAnalysis, setSeoAnalysis] = useState<SEOAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   const editor = useCustomEditor(content, (html) => {
     if (html !== content) {
@@ -552,6 +556,23 @@ useEditorAutocomplete({
               >
                 {isSaving ? "Saving..." : "Save"}
               </button>
+              <button
+                className="hover:bg-slate-100 p-2 rounded-lg flex items-center justify-center transition-all duration-200 group"
+                title="Add User"
+                onClick={() => setInviteModalOpen(true)}
+              >
+                <UserPlus size={24} className="text-gray-600 group-hover:text-gray-800" />
+              </button> {/* NEED: need to add invite user modal */}
+              <InviteModal
+              isOpen={inviteModalOpen}
+              onClose={setInviteModalOpen}
+              />
+              <button 
+                className="hover:bg-slate-100 p-2 rounded-lg flex items-center justify-center transition-all duration-200 group"
+                title="Settings"
+              >
+                <Settings size={24} className="text-gray-600 group-hover:text-gray-800" />
+              </button> {/* NEED: need to add settings modal */}
             </div>
           </div>
 
@@ -870,7 +891,16 @@ useEditorAutocomplete({
                   content={content}
                   onUpdate={(html) => setContent(html)}
                 />
-                {showSuggestionControls && (
+            {editor && user && (
+              <AutoSaving
+                editor={editor}
+                documentId={params.id as string}
+                documentTitle={documentTitle}
+                ownerId={user.id}
+                setSaving={setIsSaving}
+              />
+            )}
+                                {showSuggestionControls && (
                   <div
                     className="suggestion-controls fixed bg-white shadow-lg rounded-lg p-2 z-50 flex space-x-2"
                     style={{
