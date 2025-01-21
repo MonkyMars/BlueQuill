@@ -45,7 +45,14 @@ export default function Login() {
     e.preventDefault();
     if (validateForm()) {
       try{
-         await signIn(formData.email, formData.password);
+        const response = await signIn(formData.email, formData.password);
+        if (response.message !== "success") {	
+          setErrors({
+            email: "Invalid email or password",
+            password: "Invalid email or password",
+          });
+          return;
+        }
         router.replace("/documents");
       } catch(error) {
         console.error("Error signing in:", error);

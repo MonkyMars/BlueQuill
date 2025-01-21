@@ -13,7 +13,7 @@ interface UserProfile {
 
 interface DatabaseContext {
   user: User | null;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ message: unknown }>;
   signUp: (
     email: string,
     password: string,
@@ -37,7 +37,7 @@ interface DatabaseContext {
 
 const AuthContext = createContext<DatabaseContext>({
   user: null,
-  signIn: async () => {},
+  signIn: async () => ({ message: "Not implemented" }),
   signUp: async () => {
     throw new Error("Not implemented");
   },
@@ -77,11 +77,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [database.auth]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await database.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
+    try {
+        const { data, error } = await database.auth.signInWithPassword({
+          email,
+          password,
+        });
+    
+        if (error) {
+          return {
+            message: error.message,
+          }
+        }
+    
+        if (!data?.user) {
+          return {
+            message: "User not found",
+          }
+        }
+        return {
+          message: 'success',
+        }
+      } catch (error) {
+        return{
+          message: error
+        }
+      }
   };
 
   const signUp = async (

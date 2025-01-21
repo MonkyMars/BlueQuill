@@ -79,6 +79,10 @@ const InviteModal = ({
   };
 
   const addUserToList = () => {
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email");
+      return;
+    }
     setUsersList([
       ...usersList,
       { email, role, full_name: email.split("@")[0] },
@@ -109,7 +113,7 @@ const InviteModal = ({
 
   return (
     <>
-      <section className="fixed flex flex-col -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 bg-gray-50 p-4 rounded-lg shadow-xl">
+      <section className="fixed flex flex-col -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 bg-gray-50 p-4 rounded-lg shadow-xl z-50 w-full max-w-md">
         <header className="flex justify-between">
           <h2 className="text-2xl">Invite collaborators</h2>
           <button

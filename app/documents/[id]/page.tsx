@@ -207,11 +207,6 @@ export default function EditDocument() {
     const fetchDocumentAction = async () => {
       if (!user) {
         setIsLoading(false);
-        setAlert({
-          title: "Access Denied",
-          message: "You do not have permission to view this document.",
-          isVisible: true,
-        });
         return;
       };
       try {
@@ -220,7 +215,7 @@ export default function EditDocument() {
           setIsLoading(false);
           setAlert({
             title: "Access Denied",
-            message: "You do not have permission to view this document.",
+            message: "You do not have permission to view this document. ",
             isVisible: true,
           });
           return;
