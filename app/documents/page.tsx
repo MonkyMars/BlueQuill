@@ -6,12 +6,14 @@ import { fetchUserDocuments } from "@/utils/user/document/fetch";
 import { DocumentType } from "@/utils/types";
 import { createUserDocument } from "@/utils/user/document/create";
 import { deleteUserDocument } from "@/utils/user/document/delete";
+import { fetchProfile } from "@/utils/user/auth/profile";
 import { useAuth } from "@/utils/AuthProvider";
 import { renameUserDocument } from "@/utils/user/document/rename";
 import { RenameModal } from "./RenameModal";
 import Alert from "../components/ui/alert";
 import { useRouter } from "next/navigation";
 import { ArrowDown, FileText, Plus, Search } from "lucide-react";
+import { ProfileType } from "@/utils/types";
 
 export default function Documents() {
   const router = useRouter();
@@ -25,9 +27,10 @@ export default function Documents() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<DocumentType | null>(null);
+  const [profile, setProfile] = useState<ProfileType | null>(null);
   const [alert, setAlert] = useState<{ title: string; message: string; isVisible: boolean }>({
-    title: "Document Limit Reached",
-    message: "You have reached the maximum number of documents allowed. Please delete a document to create a new one or upgrade your account.",
+    title: "",
+    message: "",
     isVisible: false,
   });
 
@@ -56,11 +59,20 @@ export default function Documents() {
       }
     };
     fetchDocuments();
+    const handleFetchProfile = async () => {
+      if (!user) return;
+      const profile = await fetchProfile(user.id);
+      if (!profile) {
+        console.error("Error fetching profile");
+      }
+      setProfile(profile);
+    };
+    handleFetchProfile();
   }, [user]);
 
   const createDocument = async () => {
-    if (!user) return;
-    if(documents.length >= 4) {
+    if (!user || !profile) return;
+    if(documents.length >= 4 && profile.plan === 'free') {
       setAlert({
         title: "Document Limit Reached",
         message: "You have reached the maximum number of documents allowed. Please delete a document to create a new one.",
@@ -147,15 +159,15 @@ export default function Documents() {
     <main className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">My Documents</h1>
-          <Link
+          <h1 className="text-2xl font-bold text-gray-800">{profile ? `Welcome back ${profile.full_name}!` : 'My Documents'}</h1>
+            <button
             onClick={createDocument}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-            href={""}
-          >
+            aria-label="Create new document"
+            >
             <Plus className="w-5 h-5 mr-2" />
             New Document
-          </Link>
+            </button>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
@@ -175,23 +187,23 @@ export default function Documents() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 bg-transparent cursor-pointer"
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 bg-transparent cursor-pointer appearance-none"
             >
               {documentTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
               ))}
             </select>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 bg-transparent cursor-pointer"
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 bg-transparent cursor-pointer appearance-none"
             >
               {statusTypes.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
               ))}
             </select>
           </div>
