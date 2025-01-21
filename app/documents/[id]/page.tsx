@@ -15,6 +15,7 @@ import dynamic from "next/dynamic";
 import { UserPlus, Settings } from "lucide-react";
 import { AutoSaving } from "./components/AutoSaving";
 import InviteModal from "./components/InviteModal";
+import SettingsModal from "./components/SettingsModal";
 
 const DynamicEditor = dynamic(
   () => import("./components/Editor").then((mod) => mod.Editor),
@@ -184,6 +185,7 @@ export default function EditDocument() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const editor = useCustomEditor(content, (html) => {
     if (html !== content) {
@@ -559,20 +561,22 @@ useEditorAutocomplete({
               <button
                 className="hover:bg-slate-100 p-2 rounded-lg flex items-center justify-center transition-all duration-200 group"
                 title="Add User"
-                onClick={() => setInviteModalOpen(true)}
+                onClick={() => setInviteModalOpen(!inviteModalOpen)}
               >
                 <UserPlus size={24} className="text-gray-600 group-hover:text-gray-800" />
-              </button> {/* NEED: need to add invite user modal */}
+              </button>
               <InviteModal
               isOpen={inviteModalOpen}
-              onClose={setInviteModalOpen}
+              onClose={() => setInviteModalOpen(false)}
               />
               <button 
                 className="hover:bg-slate-100 p-2 rounded-lg flex items-center justify-center transition-all duration-200 group"
                 title="Settings"
+                onClick={() => setSettingsModalOpen(!settingsModalOpen)}
               >
                 <Settings size={24} className="text-gray-600 group-hover:text-gray-800" />
-              </button> {/* NEED: need to add settings modal */}
+              </button>
+              <SettingsModal isOpen={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} title={documentTitle}/>
             </div>
           </div>
 
