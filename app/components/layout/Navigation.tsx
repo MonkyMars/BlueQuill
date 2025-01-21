@@ -28,7 +28,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-20">
           <Link href="/" className="flex items-center space-x-3 group">
             <span className="text-2xl font-extrabold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent 
-            transition-transform group-hover:scale-105">EvoWrite</span>
+            transition-transform group-hover:scale-105">BlueQuill</span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-10">

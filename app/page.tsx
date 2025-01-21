@@ -9,7 +9,7 @@ export default function Home() {
             AI-Powered Document Creation and Optimization
             </h1>
           <p className="text-xl mb-8 text-slate-200">
-            EvoWrite helps you create, edit, and optimize your documents with intelligent AI assistance. From content suggestions to SEO optimization, we make your writing process smarter and more efficient.
+            BlueQuill helps you create, edit, and optimize your documents with intelligent AI assistance. From content suggestions to SEO optimization, we make your writing process smarter and more efficient.
           </p>
           <div className="space-x-4">
             <Link href="/register" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
@@ -81,7 +81,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-8">
             {[
               {
-                quote: "EvoWrite's AI assistant and SEO tools have helped me create better content in less time. The suggestions are always relevant and helpful.",
+                quote: "BlueQuill's AI assistant and SEO tools have helped me create better content in less time. The suggestions are always relevant and helpful.",
                 author: "Sarah Johnson",
                 role: "Content Creator"
               },
@@ -105,7 +105,7 @@ export default function Home() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Start creating better content today!</h2>
           <p className="text-xl mb-8">
-            Join our community of writers and content creators using EvoWrite to improve their work.
+            Join our community of writers and content creators using BlueQuill to improve their work.
           </p>
           <Link href="/register" className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors inline-block">
             Get Started Now - It&apos;s Free

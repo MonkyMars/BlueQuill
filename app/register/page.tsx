@@ -109,7 +109,7 @@ const Page = () => {
               <p className="text-slate-600">
                 {selectedPlan === "pro"
                   ? "Start your Pro trial today"
-                  : "Get started with EvoWrite for free"}
+                  : "Get started with BlueQuill for free"}
               </p>
             </div>
 

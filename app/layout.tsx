@@ -7,9 +7,9 @@ import { AuthProvider } from "@/utils/AuthProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "EvoWrite - AI-Powered Writing Assistant",
+  title: "BlueQuill - AI-Powered Writing Assistant",
   description:
-    "Transform your writing with EvoWrite. Advanced AI-powered writing assistance for content creators, students, and professionals.",
+    "Transform your writing with BlueQuill. Advanced AI-powered writing assistance for content creators, students, and professionals.",
 };
 
 export default function RootLayout({
