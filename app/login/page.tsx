@@ -84,7 +84,7 @@ export default function Login() {
               <h1 className="text-2xl font-bold text-gray-800 mb-2">
                 Welcome back
               </h1>
-              <p className="text-slate-600">Sign in to continue to TextifyAI</p>
+              <p className="text-slate-600">Sign in to continue to EvoWrite</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">

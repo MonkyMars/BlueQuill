@@ -56,7 +56,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-xl font-semibold text-gray-800 mb-3">6. Contact Us</h2>
               <p>
-                If you have any questions about this privacy policy or our treatment of your personal data, please contact us at support@textifyai.com.
+                If you have any questions about this privacy policy or our treatment of your personal data, please contact us at support@evowrite.com.
               </p>
             </section>
 

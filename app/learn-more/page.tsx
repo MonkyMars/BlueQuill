@@ -6,7 +6,7 @@ export default function LearnMore() {
       <section className="bg-gradient-to-r from-slate-900 to-blue-900 text-white py-16">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold mb-4">
-            Discover the Power of TextifyAI
+            Discover the Power of EvoWrite
           </h1>
           <p className="text-xl text-slate-200 max-w-3xl">
             Explore how our advanced AI writing assistant can transform your
@@ -198,9 +198,9 @@ export default function LearnMore() {
           <div className="max-w-3xl mx-auto space-y-6">
             {[
               {
-                question: "How does TextifyAI improve my writing?",
+                question: "How does EvoWrite improve my writing?",
                 answer:
-                  "TextifyAI uses advanced AI to analyze your content and provide real-time suggestions for grammar, style, tone, and structure. It helps you write more effectively while maintaining your unique voice.",
+                  "EvoWrite uses advanced AI to analyze your content and provide real-time suggestions for grammar, style, tone, and structure. It helps you write more effectively while maintaining your unique voice.",
               },
               {
                 question: "Is my content secure and private?",
@@ -208,14 +208,14 @@ export default function LearnMore() {
                   "Yes, we take privacy seriously. Your content is encrypted and never shared with third parties. You retain full ownership of all your writing.",
               },
               {
-                question: "Can I try TextifyAI before subscribing?",
+                question: "Can I try EvoWrite before subscribing?",
                 answer:
-                  "Absolutely! We offer a free tier that lets you experience the core features of TextifyAI before deciding to upgrade to a premium plan.",
+                  "Absolutely! We offer a free tier that lets you experience the core features of EvoWrite before deciding to upgrade to a premium plan.",
               },
               {
-                question: "What types of writing does TextifyAI support?",
+                question: "What types of writing does EvoWrite support?",
                 answer:
-                  "TextifyAI supports various types of writing including blog posts, academic papers, creative writing, business documents, scripts, and more. Each type has specialized features and suggestions.",
+                  "EvoWrite supports various types of writing including blog posts, academic papers, creative writing, business documents, scripts, and more. Each type has specialized features and suggestions.",
               },
             ].map((faq, index) => (
               <div key={index} className="bg-white p-6 rounded-xl shadow-lg">

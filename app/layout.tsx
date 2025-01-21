@@ -7,9 +7,9 @@ import { AuthProvider } from "@/utils/AuthProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TextifyAI - AI-Powered Writing Assistant",
+  title: "EvoWrite - AI-Powered Writing Assistant",
   description:
-    "Transform your writing with TextifyAI. Advanced AI-powered writing assistance for content creators, students, and professionals.",
+    "Transform your writing with EvoWrite. Advanced AI-powered writing assistance for content creators, students, and professionals.",
 };
 
 export default function RootLayout({

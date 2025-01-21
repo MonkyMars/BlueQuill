@@ -212,7 +212,7 @@ export default function Pricing() {
             href="/register" 
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
           >
-            Try TextifyAI Free
+            Try EvoWrite Free
           </Link>
         </div>
       </section>

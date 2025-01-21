@@ -9,14 +9,14 @@ export default function TermsOfService() {
             <section>
               <h2 className="text-xl font-semibold text-gray-800 mb-3">1. Acceptance of Terms</h2>
               <p>
-                By accessing and using TextifyAI, you accept and agree to be bound by the terms and provision of this agreement.
+                By accessing and using EvoWrite, you accept and agree to be bound by the terms and provision of this agreement.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-gray-800 mb-3">2. Description of Service</h2>
               <p>
-                TextifyAI provides an AI-powered document editing and optimization platform. Our services include but are not limited to:
+                EvoWrite provides an AI-powered document editing and optimization platform. Our services include but are not limited to:
               </p>
               <ul className="list-disc pl-6 mt-2 space-y-2">
                 <li>Document creation and editing</li>
@@ -67,7 +67,7 @@ export default function TermsOfService() {
             <section>
               <h2 className="text-xl font-semibold text-gray-800 mb-3">7. Limitation of Liability</h2>
               <p>
-                In no event shall TextifyAI be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses.
+                In no event shall EvoWrite be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses.
               </p>
             </section>
 
