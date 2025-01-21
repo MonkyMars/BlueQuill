@@ -205,7 +205,15 @@ export default function EditDocument() {
 
   useEffect(() => {
     const fetchDocumentAction = async () => {
-      if (!user) return;
+      if (!user) {
+        setIsLoading(false);
+        setAlert({
+          title: "Access Denied",
+          message: "You do not have permission to view this document.",
+          isVisible: true,
+        });
+        return;
+      };
       try {
         const document = await fetchDocument(params.id as string);
         if (!document) {
