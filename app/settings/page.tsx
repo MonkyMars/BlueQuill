@@ -1,7 +1,8 @@
 "use client";
 import { useAuth } from "@/utils/AuthProvider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchProfile } from "@/utils/user/auth/profile";
 
 export default function Settings() {
   const { user, updateUserProfile, signOut } = useAuth();
@@ -12,6 +13,16 @@ export default function Settings() {
     displayName: user?.user_metadata?.display_name || '',
     email: user?.email || '',
   });
+
+  useEffect(() => {
+    if (!user) return;
+    fetchProfile(user.id).then((data) => {
+      setFormData({
+        displayName: data?.full_name || '',
+        email: user.email || '',
+      })
+    });
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
