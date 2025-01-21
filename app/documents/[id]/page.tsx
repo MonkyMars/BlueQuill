@@ -16,6 +16,7 @@ import { UserPlus, Settings } from "lucide-react";
 import { AutoSaving } from "./components/AutoSaving";
 import InviteModal from "./components/InviteModal";
 import SettingsModal from "./components/SettingsModal";
+import Alert from "@/app/components/ui/alert";
 
 const DynamicEditor = dynamic(
   () => import("./components/Editor").then((mod) => mod.Editor),
@@ -186,6 +187,15 @@ export default function EditDocument() {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [alert, setAlert] = useState<{
+    title: string;
+    message: string;
+    isVisible: boolean;
+  }>({
+    title: "",
+    message: "",
+    isVisible: false,
+  });
 
   const editor = useCustomEditor(content, (html) => {
     if (html !== content) {
@@ -199,7 +209,12 @@ export default function EditDocument() {
       try {
         const document = await fetchDocument(params.id as string);
         if (!document) {
-          router.push("/documents");
+          setIsLoading(false);
+          setAlert({
+            title: "Access Denied",
+            message: "You do not have permission to view this document.",
+            isVisible: true,
+          });
           return;
         }
 
@@ -207,22 +222,31 @@ export default function EditDocument() {
           String(document.id) !== String(params.id) ||
           String(document.owner) !== String(user.id)
         ) {
-          window.location.href = "/documents";
+          setIsLoading(false);
+          setAlert({
+            title: "Access Denied",
+            message: "You do not have permission to view this document.",
+            isVisible: true,
+          });
           return;
         }
-
         setDocumentTitle(document.title);
         setContent(document.content);
         setIsLoading(false);
         setIsEditorReady(true);
       } catch (error) {
+        setIsLoading(false);
+        setAlert({
+          title: "Error",
+          message: "An error occurred while fetching the document.",
+          isVisible: true,
+        });
         console.error("Error fetching document:", error);
-        router.push("/documents");
       }
     };
 
     fetchDocumentAction();
-  }, [params.id, router, user]);
+  }, [user, params.id]);
 
   useEffect(() => {
     if (editor && content && isEditorReady) {
@@ -501,6 +525,7 @@ useEditorAutocomplete({
 
   return (
     <div className="flex flex-col h-full">
+      <Alert props={alert} onClose={() => setAlert({ ...alert, isVisible: false })} onConfirm={() => {}} />
       <div className="relative bg-white pt-2 border-b border-gray-200 z-10 overflow-hidden">
         <div className="container mx-auto px-4 text-gray-800 bg-white">
           <div className="flex items-center justify-between h-14 bg-white">
