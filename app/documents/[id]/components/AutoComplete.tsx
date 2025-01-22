@@ -1,11 +1,12 @@
 import { useEffect, useCallback, useRef } from "react";
 import { Editor } from "@tiptap/core";
 import { getAutoCompletion } from "@/utils/document/AIchat";
+import { DocumentType } from "@/utils/types";
 
 interface AutoCompleteProps {
   editor: Editor | null;
   autoComplete: boolean;
-  documentTitle: string;
+  document: DocumentType;
   currentSuggestion: string | null;
   suggestionPos: number | null;
   acceptSuggestion: () => void;
@@ -21,7 +22,7 @@ interface AutoCompleteProps {
 export const useEditorAutocomplete = ({
   editor,
   autoComplete,
-  documentTitle,
+  document,
   currentSuggestion,
   suggestionPos,
   acceptSuggestion,
@@ -154,7 +155,7 @@ export const useEditorAutocomplete = ({
       console.log("Content for auto-completion:", currentContent);
       try {
         const documentContext = {
-          title: documentTitle,
+          title: document.title,
           content: editor.getHTML(),
           selection: null,
         };
@@ -257,7 +258,7 @@ export const useEditorAutocomplete = ({
   }, [
     editor,
     autoComplete,
-    documentTitle,
+    document,
     currentSuggestion,
     suggestionPos,
     acceptSuggestion,

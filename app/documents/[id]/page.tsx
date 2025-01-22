@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useEditor, BubbleMenu } from "@tiptap/react";
-import type { DocumentType } from "@/utils/types";
+import type { DocumentType as TextDocument } from "@/utils/types";
 import { useParams, useRouter } from "next/navigation";
 import { saveDocument } from "@/utils/document/save";
 import { fetchDocument } from "@/utils/document/fetch";
@@ -166,14 +166,21 @@ export default function EditDocument() {
   const router = useRouter();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [documentTitle, setDocumentTitle] = useState("Untitled Document");
+  const [currentDocument, setCurrentDocument] = useState<TextDocument>({
+    id: "",
+    owner: "",
+    title: "Untitled Document",
+    content: "",
+    updatedAt: new Date(),
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [aiMessages, setAiMessages] = useState<AIAssistantMessage[]>([]);
   const [aiPrompt, setAiPrompt] = useState("");
-  const [content, setContent] = useState<string>("");
   const [autoComplete, setAutoComplete] = useState(false);
-  const [currentSuggestion, setCurrentSuggestion] = useState<string | null>(null);
+  const [currentSuggestion, setCurrentSuggestion] = useState<string | null>(
+    null
+  );
   const [suggestionPos, setSuggestionPos] = useState<number | null>(null);
   const [showSuggestionControls, setShowSuggestionControls] = useState(false);
   const [suggestionPosition, setSuggestionPosition] = useState({ x: 0, y: 0 });
@@ -191,15 +198,19 @@ export default function EditDocument() {
     title: string;
     message: string;
     isVisible: boolean;
+    closeText: string;
+    confirmText: string;
   }>({
     title: "",
     message: "",
     isVisible: false,
+    closeText: "",
+    confirmText: "",
   });
 
-  const editor = useCustomEditor(content, (html) => {
-    if (html !== content) {
-      setContent(html);
+  const editor = useCustomEditor(currentDocument.content, (html) => {
+    if (html !== currentDocument.content) {
+      setCurrentDocument({ ...currentDocument, content: html });
     }
   });
 
@@ -208,7 +219,7 @@ export default function EditDocument() {
       if (!user) {
         setIsLoading(false);
         return;
-      };
+      }
       try {
         const document = await fetchDocument(params.id as string);
         if (!document) {
@@ -216,6 +227,8 @@ export default function EditDocument() {
           setAlert({
             title: "Access Denied",
             message: "You do not have permission to view this document. ",
+            closeText: "Close",
+            confirmText: "Back to documents",
             isVisible: true,
           });
           return;
@@ -228,20 +241,23 @@ export default function EditDocument() {
           setIsLoading(false);
           setAlert({
             title: "Access Denied",
-            message: "You do not have permission to view this document.",
+            message: "You do not have permission to view this document. ",
+            closeText: "Close",
+            confirmText: "Back to documents",
             isVisible: true,
           });
           return;
         }
-        setDocumentTitle(document.title);
-        setContent(document.content);
+        setCurrentDocument(document);
         setIsLoading(false);
         setIsEditorReady(true);
       } catch (error) {
         setIsLoading(false);
         setAlert({
-          title: "Error",
-          message: "An error occurred while fetching the document.",
+          title: "Access Denied",
+          message: "You do not have permission to view this document. ",
+          closeText: "Close",
+          confirmText: "Back to documents",
           isVisible: true,
         });
         console.error("Error fetching document:", error);
@@ -252,10 +268,10 @@ export default function EditDocument() {
   }, [user, params.id]);
 
   useEffect(() => {
-    if (editor && content && isEditorReady) {
-      editor.commands.setContent(content);
+    if (editor && currentDocument.content && isEditorReady) {
+      editor.commands.setContent(currentDocument.content);
     }
-  }, [editor, content, isEditorReady]);
+  }, [editor, currentDocument, isEditorReady]);
 
   const acceptSuggestion = useCallback(() => {
     if (!currentSuggestion || suggestionPos === null || !editor) return;
@@ -288,10 +304,10 @@ export default function EditDocument() {
     if (!user) return;
     setIsSaving(true);
     try {
-      const saveableDocument: DocumentType = {
+      const saveableDocument: TextDocument = {
         owner: user.id,
         id: params.id as string,
-        title: documentTitle,
+        title: currentDocument.title,
         content: editor?.getHTML() as string,
         updatedAt: new Date(),
       };
@@ -301,7 +317,7 @@ export default function EditDocument() {
     } finally {
       setIsSaving(false);
     }
-  }, [params.id, documentTitle, editor, user]);
+  }, [params.id, currentDocument.title, editor, user]);
 
   const handleAIAssist = useCallback(async () => {
     if (!aiPrompt) return;
@@ -314,7 +330,7 @@ export default function EditDocument() {
     setAiMessages((prevMessages) => [...prevMessages, newMessage]);
 
     const documentContext = {
-      title: documentTitle,
+      title: currentDocument.title,
       content: editor?.getHTML() || "",
       selection: editor?.state.selection.content().content.size
         ? editor?.state.selection.content().content.toJSON()
@@ -334,7 +350,7 @@ export default function EditDocument() {
       canApply: true,
     };
     setAiMessages((prevMessages) => [...prevMessages, newAiMessage]);
-  }, [aiPrompt, aiMessages, documentTitle, editor]);
+  }, [aiPrompt, aiMessages, currentDocument.title, editor]);
 
   const handleApplyAISuggestion = useCallback(
     (messageIndex: number) => {
@@ -361,22 +377,22 @@ export default function EditDocument() {
     },
     [aiMessages]
   );
-  
-useEditorAutocomplete({
-  editor: editor?.isInitialized ? editor : null,
-  autoComplete,
-  documentTitle,
-  currentSuggestion,
-  suggestionPos,
-  acceptSuggestion,
-  declineSuggestion,
-  lastSuggestionTime,
-  setCurrentSuggestion,
-  setSuggestionPos,
-  setShowSuggestionControls,
-  setSuggestionPosition,
-  setLastSuggestionTime,
-});
+
+  useEditorAutocomplete({
+    editor: editor?.isInitialized ? editor : null,
+    autoComplete,
+    document: currentDocument,
+    currentSuggestion,
+    suggestionPos,
+    acceptSuggestion,
+    declineSuggestion,
+    lastSuggestionTime,
+    setCurrentSuggestion,
+    setSuggestionPos,
+    setShowSuggestionControls,
+    setSuggestionPosition,
+    setLastSuggestionTime,
+  });
 
   useEffect(() => {
     const styleId = "textify-editor-styles";
@@ -469,7 +485,7 @@ useEditorAutocomplete({
 
     setIsAnalyzing(true);
     try {
-      const analysis = await analyzeSEO(editor.getHTML(), documentTitle);
+      const analysis = await analyzeSEO(editor.getHTML(), currentDocument.title);
       setSeoAnalysis(analysis);
     } catch (error) {
       console.error("Error analyzing SEO:", error);
@@ -485,7 +501,7 @@ useEditorAutocomplete({
     try {
       const { optimizedContent, changes } = await optimizeContent(
         editor.getHTML(),
-        documentTitle
+        currentDocument.title
       );
 
       editor.commands.setContent(optimizedContent);
@@ -528,7 +544,17 @@ useEditorAutocomplete({
 
   return (
     <div className="flex flex-col h-full">
-      <Alert props={alert} onClose={() => setAlert({ ...alert, isVisible: false })} onConfirm={() => {}} />
+      <Alert
+        props={alert}
+        onClose={() => {
+          setAlert({ ...alert, isVisible: false });
+          router.push('/');
+        }}
+        onConfirm={() => {
+          setAlert({ ...alert, isVisible: false });
+          router.push('/');
+        }}
+      />
       <div className="relative bg-white pt-2 border-b border-gray-200 z-10 overflow-hidden">
         <div className="container mx-auto px-4 text-gray-800 bg-white">
           <div className="flex items-center justify-between h-14 bg-white">
@@ -553,8 +579,8 @@ useEditorAutocomplete({
               </button>
               <input
                 type="text"
-                value={documentTitle}
-                onChange={(e) => setDocumentTitle(e.target.value)}
+                value={currentDocument.title}
+                onChange={(e) => setCurrentDocument({...currentDocument, title: e.target.value})}
                 className="text-xl font-semibold bg-transparent border-none focus:outline-none text-gray-800 px-2 py-1 rounded hover:bg-gray-100 focus:bg-gray-100"
               />
             </div>
@@ -591,20 +617,33 @@ useEditorAutocomplete({
                 title="Add User"
                 onClick={() => setInviteModalOpen(!inviteModalOpen)}
               >
-                <UserPlus size={24} className="text-gray-600 group-hover:text-gray-800" />
+                <UserPlus
+                  size={24}
+                  className="text-gray-600 group-hover:text-gray-800"
+                />
               </button>
               <InviteModal
-              isOpen={inviteModalOpen}
-              onClose={() => setInviteModalOpen(false)}
+                isOpen={inviteModalOpen}
+                onClose={() => setInviteModalOpen(false)}
               />
-              <button 
+              <button
                 className="hover:bg-slate-100 p-2 rounded-lg flex items-center justify-center transition-all duration-200 group"
                 title="Settings"
                 onClick={() => setSettingsModalOpen(!settingsModalOpen)}
               >
-                <Settings size={24} className="text-gray-600 group-hover:text-gray-800" />
+                <Settings
+                  size={24}
+                  className="text-gray-600 group-hover:text-gray-800"
+                />
               </button>
-              <SettingsModal isOpen={settingsModalOpen} onClose={() => setSettingsModalOpen(false)} title={documentTitle}/>
+              <SettingsModal
+                isOpen={settingsModalOpen}
+                onClose={(closed: boolean) => setSettingsModalOpen(!closed)}
+                document={currentDocument}
+                setDocument={(document: TextDocument) =>
+                  setCurrentDocument(document)
+                }
+              />
             </div>
           </div>
 
@@ -920,19 +959,19 @@ useEditorAutocomplete({
             {isEditorReady && editor && (
               <>
                 <DynamicEditor
-                  content={content}
-                  onUpdate={(html) => setContent(html)}
+                  content={currentDocument.content}
+                  onUpdate={(html) => setCurrentDocument((prev) => ({ ...prev, content: html }))}
                 />
-            {editor && user && (
-              <AutoSaving
-                editor={editor}
-                documentId={params.id as string}
-                documentTitle={documentTitle}
-                ownerId={user.id}
-                setSaving={setIsSaving}
-              />
-            )}
-                                {showSuggestionControls && (
+                {editor && user && (
+                  <AutoSaving
+                    editor={editor}
+                    documentId={params.id as string}
+                    documentTitle={currentDocument.title}
+                    ownerId={user.id}
+                    setSaving={setIsSaving}
+                  />
+                )}
+                {showSuggestionControls && (
                   <div
                     className="suggestion-controls fixed bg-white shadow-lg rounded-lg p-2 z-50 flex space-x-2"
                     style={{

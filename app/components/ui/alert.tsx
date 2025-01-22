@@ -6,6 +6,8 @@ interface AlertProps {
   title: string;
   message: string;
   isVisible: boolean;
+  closeText: string;
+  confirmText: string;
   }
   onClose: () => void;
   onConfirm: () => void;
@@ -28,7 +30,7 @@ const Alert: React.FC<AlertProps> = ({ props, onClose, onConfirm }) => {
           onClick={() => onClose()}
           className="px-4 py-2 text-gray-600 hover:text-gray-800"
         >
-          Cancel
+          {props.closeText}
         </button>
         <button
           onClick={() => {
@@ -37,7 +39,7 @@ const Alert: React.FC<AlertProps> = ({ props, onClose, onConfirm }) => {
           }}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
-          Upgrade
+          {props.confirmText}
         </button>
       </div>
     </div>

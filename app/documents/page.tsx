@@ -28,17 +28,21 @@ export default function Documents() {
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<DocumentType | null>(null);
   const [profile, setProfile] = useState<ProfileType | null>(null);
-  const [alert, setAlert] = useState<{ title: string; message: string; isVisible: boolean }>({
+  const [alert, setAlert] = useState<{ title: string; message: string; isVisible: boolean; closeText: string; confirmText: string }>({
     title: "",
     message: "",
+    closeText: "",
+    confirmText: "",
     isVisible: false,
   });
 
   const onCloseAlert = () => {
     setAlert({
       title: "",
-      message: "",
-      isVisible: false,
+    message: "",
+    closeText: "",
+    confirmText: "",
+    isVisible: false,
     });
   };
 
@@ -76,6 +80,8 @@ export default function Documents() {
       setAlert({
         title: "Document Limit Reached",
         message: "You have reached the maximum number of documents allowed. Please delete a document to create a new one.",
+        closeText: "Close",
+        confirmText: "Upgrade Plan",
         isVisible: true,
       })
       return;
