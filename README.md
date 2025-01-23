@@ -2,7 +2,7 @@
 
 BlueQuill is a modern, AI-powered document editor designed to enhance your writing experience. With integrated AI chat and auto-complete features, BlueQuill helps you write smarter, faster, and more efficiently. Whether you're drafting documents, collaborating with teams, or brainstorming ideas, BlueQuill is your ultimate writing companion.
 
-![BlueQuill Screenshot](/public/banner.png)  
+![BlueQuill Screenshot](/public/BlueQuill.webp)  
 
 ---
 
