@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { database } from "@/utils/client";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Button } from "@/app/components/ui/button";
 
 const ConfirmEmailPage = () => {
   const searchParams = useSearchParams();
@@ -86,13 +85,13 @@ const ConfirmEmailPage = () => {
           <p className="text-center text-sm text-gray-500">
             Didn&apos;t receive the email?
           </p>
-          <Button
+          <button
             onClick={handleResendConfirmation}
             disabled={isLoading}
             className="mt-3 w-full flex justify-center py-2 px-4"
           >
             {isLoading ? "Sending..." : "Resend confirmation email"}
-          </Button>
+          </button>
         </div>
         {isSuccess && (
           <p className="text-center text-sm text-green-600">
