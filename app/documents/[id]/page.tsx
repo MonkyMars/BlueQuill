@@ -684,28 +684,28 @@ export default function EditDocument() {
                   </svg>
                 </button>
                 {showSizeDropdown && (
-                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 w-40 z-50">
+                    <div className="absolute top-10 left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 w-40 z-50">
                     {TEXT_SIZES.map((size) => (
-                      <button
-                        key={size.class}
-                        onClick={() => {
-                          editor
-                            .chain()
-                            .focus()
-                            .setMark("fontSize", { class: size.class })
-                            .run();
-                          setShowSizeDropdown(false);
-                        }}
-                        className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
-                          editor.isActive("fontSize", { class: size.class })
-                            ? "bg-gray-100"
-                            : ""
-                        }`}
-                      >
-                        <span className={size.class}>{size.name}</span>
-                      </button>
+                    <button
+                    key={size.class}
+                    onClick={() => {
+                      editor
+                      .chain()
+                      .focus()
+                      .setMark("fontSize", { class: size.class })
+                      .run();
+                      setShowSizeDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-100 z-50 ${
+                      editor.isActive("fontSize", { class: size.class })
+                      ? "bg-gray-100"
+                      : ""
+                    }`}
+                    >
+                    <span className={size.class}>{size.name}</span>
+                    </button>
                     ))}
-                  </div>
+                    </div>
                 )}
               </div>
               <div className="w-px h-6 bg-gray-200 mx-2" />
@@ -952,10 +952,10 @@ export default function EditDocument() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 bg-white">
+      <div className="container mx-auto px-4 bg-white z-0">
         <div className="flex bg-white">
           {/* Editor */}
-          <div className={`flex-1 pt-4 ${showAIPanel ? "mr-4" : ""}`}>
+          <div className="flex-1 pt-4">
             {isEditorReady && editor && (
               <>
                 <DynamicEditor
