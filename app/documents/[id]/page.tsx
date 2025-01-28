@@ -603,7 +603,7 @@ export default function EditDocument() {
                     : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                AI Assistant
+                Lazuli: AI Assistant
               </button>
               <button
                 onClick={handleSave}
@@ -1098,7 +1098,7 @@ export default function EditDocument() {
                           type="text"
                           value={aiPrompt}
                           onChange={(e) => setAiPrompt(e.target.value)}
-                          placeholder="Ask AI for help..."
+                          placeholder="Ask Lazuli for help..."
                           className="flex-1 px-3 py-2 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
