@@ -202,17 +202,19 @@ export default function Pricing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16">
+      <section className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white py-24">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4 text-gray-800">Ready to Get Started?</h2>
-          <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
-            Join our community of content creators and start optimizing your documents today.
+          <h2 className="text-4xl font-bold mb-6 text-white bg-clip-text">
+        Ready to Get Started?
+          </h2>
+          <p className="text-xl text-slate-200 mb-10 max-w-2xl mx-auto leading-relaxed">
+        Join our community of content creators and start optimizing your documents today.
           </p>
           <Link 
-            href="/register" 
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+        href="/register" 
+        className="inline-block bg-transparent border-2 border-white text-white p-4 rounded-lg font-semibold hover:bg-white hover:text-blue-900 transition-colors"
           >
-            Try BlueQuill Free
+        Try BlueQuill Free
           </Link>
         </div>
       </section>
