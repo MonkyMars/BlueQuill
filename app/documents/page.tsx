@@ -1,5 +1,24 @@
 "use client";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchUserDocuments } from "@/utils/user/document/fetch";
@@ -12,7 +31,14 @@ import { renameUserDocument } from "@/utils/user/document/rename";
 import { RenameModal } from "./RenameModal";
 import Alert from "../components/ui/alert";
 import { useRouter } from "next/navigation";
-import { ArrowDown, FileText, Plus, Search } from "lucide-react";
+import {
+  ArrowDown,
+  EllipsisVertical,
+  FileText,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { ProfileType } from "@/utils/types";
 
 export default function Documents() {
@@ -26,9 +52,17 @@ export default function Documents() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<DocumentType | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentType | null>(
+    null
+  );
   const [profile, setProfile] = useState<ProfileType | null>(null);
-  const [alert, setAlert] = useState<{ title: string; message: string; isVisible: boolean; closeText: string; confirmText: string }>({
+  const [alert, setAlert] = useState<{
+    title: string;
+    message: string;
+    isVisible: boolean;
+    closeText: string;
+    confirmText: string;
+  }>({
     title: "",
     message: "",
     closeText: "",
@@ -39,10 +73,10 @@ export default function Documents() {
   const onCloseAlert = () => {
     setAlert({
       title: "",
-    message: "",
-    closeText: "",
-    confirmText: "",
-    isVisible: false,
+      message: "",
+      closeText: "",
+      confirmText: "",
+      isVisible: false,
     });
   };
 
@@ -76,14 +110,15 @@ export default function Documents() {
 
   const createDocument = async () => {
     if (!user || !profile) return;
-    if(documents.length >= 4 && profile.plan === 'free') {
+    if (documents.length >= 4 && profile.plan === "free") {
       setAlert({
         title: "Document Limit Reached",
-        message: "You have reached the maximum number of documents allowed. Please delete a document to create a new one.",
+        message:
+          "You have reached the maximum number of documents allowed. Please delete a document to create a new one.",
         closeText: "Close",
         confirmText: "Upgrade Plan",
         isVisible: true,
-      })
+      });
       return;
     }
     const newDocument: DocumentType = {
@@ -116,18 +151,22 @@ export default function Documents() {
 
   const handleRename = async (newTitle: string) => {
     if (!selectedDocument || !user) return;
-    
+
     try {
-      const data = await renameUserDocument(selectedDocument.id, newTitle, user.id);
+      const data = await renameUserDocument(
+        selectedDocument.id,
+        newTitle,
+        user.id
+      );
       if (data.success) {
-        setDocuments(documents.map(doc => 
-          doc.id === selectedDocument.id 
-            ? { ...doc, title: newTitle }
-            : doc
-        ));
+        setDocuments(
+          documents.map((doc) =>
+            doc.id === selectedDocument.id ? { ...doc, title: newTitle } : doc
+          )
+        );
       }
     } catch (error) {
-      console.error('Error renaming document:', error);
+      console.error("Error renaming document:", error);
     }
   };
 
@@ -165,15 +204,17 @@ export default function Documents() {
     <main className="min-h-screen bg-slate-50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">{profile ? `Welcome back ${profile.full_name}!` : 'My Documents'}</h1>
-            <button
+          <h1 className="text-2xl font-bold text-gray-800">
+            {profile ? `Welcome back ${profile.full_name}!` : "My Documents"}
+          </h1>
+          <button
             onClick={createDocument}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
             aria-label="Create new document"
-            >
+          >
             <Plus className="w-5 h-5 mr-2" />
             New Document
-            </button>
+          </button>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
@@ -196,9 +237,9 @@ export default function Documents() {
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 bg-transparent cursor-pointer appearance-none"
             >
               {documentTypes.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
               ))}
             </select>
             <select
@@ -207,9 +248,9 @@ export default function Documents() {
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 bg-transparent cursor-pointer appearance-none"
             >
               {statusTypes.map((status) => (
-              <option key={status.value} value={status.value}>
-                {status.label}
-              </option>
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
               ))}
             </select>
           </div>
@@ -224,9 +265,7 @@ export default function Documents() {
               } hover:text-blue-600 transition-colors flex-1`}
             >
               Name
-              {sortBy === "name" && (
-                <ArrowDown className="w-4 h-4 ml-2"/>
-              )}
+              {sortBy === "name" && <ArrowDown className="w-4 h-4 ml-2" />}
             </button>
             <button
               onClick={() => setSortBy("date")}
@@ -235,9 +274,7 @@ export default function Documents() {
               } hover:text-blue-600 transition-colors w-48`}
             >
               Last Modified
-                {sortBy === "date" && (
-                <ArrowDown className="w-4 h-4 ml-2"/>
-                )}
+              {sortBy === "date" && <ArrowDown className="w-4 h-4 ml-2" />}
             </button>
             <div className="w-24 text-gray-600">Status</div>
             <div className="w-24 text-gray-600">Type</div>
@@ -286,22 +323,65 @@ export default function Documents() {
                 </div>
                 <div className="w-24 text-gray-600 capitalize">{doc.type}</div>
                 <div className="relative">
-                  <button
-                    className="w-8 text-gray-400 hover:text-gray-600"
-                    onClick={() => {
-                      setSelectedDocument(doc);
-                      setRenameModalOpen(true);
-                      setMenuOpen(null);
-                    }}
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-                    </svg>
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <EllipsisVertical
+                        size={20}
+                        className="text-slate-400 hover:text-slate-600"
+                      />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>{doc.title}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setRenameModalOpen(!renameModalOpen)}
+                        className="cursor-pointer"
+                      >
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="cursor-pointer">Update Status</DropdownMenuItem> {/* need to add updateStatus function */}
+                      <DropdownMenuItem className="cursor-pointer">Update Type</DropdownMenuItem> {/* need to add updateType function */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                            className={cn(
+                              "flex items-center gap-2 text-destructive",
+                              "hover:bg-destructive hover:text-destructive-foreground",
+                              "focus:bg-destructive focus:text-destructive-foreground",
+                              "rounded-md transition-colors cursor-pointer"
+                            )}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Remove
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{doc.title}</AlertDialogTitle>
+                          </AlertDialogHeader>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this document? This
+                            change cannot be undone.
+                          </AlertDialogDescription>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className={cn(
+                                "bg-red-500 text-white hover:bg-red-600",
+                                "focus:ring-2 focus:ring-red-500 focus:ring-opacity-50",
+                                "rounded-md transition-colors cursor-pointer px-4 py-2"
+                              )}
+                              // need to add deleteDocument function
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   {menuOpen === doc.id && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 py-1">
                       <button
@@ -340,7 +420,11 @@ export default function Documents() {
         onRename={handleRename}
         currentTitle={selectedDocument?.title || ""}
       />
-      <Alert props={alert} onClose={onCloseAlert} onConfirm={() => router.replace('/pricing')} />
+      <Alert
+        props={alert}
+        onClose={onCloseAlert}
+        onConfirm={() => router.replace("/pricing")}
+      />
     </main>
   );
 }
