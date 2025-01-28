@@ -60,9 +60,6 @@ export default function Login() {
           email: "Invalid email or password",
           password: "Invalid email or password",
       });
-     
-      window.location.href = '/documents';
-      console.log("Form submitted:", formData);
     }
   }
   };
