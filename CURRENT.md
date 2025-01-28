@@ -8,7 +8,10 @@
 
 > 💡 **Pro tip:** For optimal performance and functionality, use BlueQuill on Chrome, Firefox, or Edge browsers with a minimum screen width of 1024px.
 
-View BlueQuill's [README](https://github.com/MonkyMars/BlueQuill/blob/master/README.md) for additional information.
+### Additional Documentation
+View BlueQuill's [README](https://github.com/MonkyMars/BlueQuill/blob/master/README.md) for detailed product information.
+
+> **Important:** BlueQuill's README reflects the released version. If any discrepancies exist between the README and this CURRENT document, the information in CURRENT takes precedence as it represents the latest development state.
 
 ### Features
 - **Lapzuli:** Our AI document assistant. Capable of providing recommendations, SEO optimizations, and creative inspiration. For example, Lapzuli can suggest improvements for your document's tone and structure.
