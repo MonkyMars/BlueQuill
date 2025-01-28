@@ -1,6 +1,10 @@
 # Current Version of [BlueQuill](https://www.bluequill.tech/)
 ## Version 0.1 (BETA)
-**Important Notice!** BlueQuill is currently optimized for desktop and laptop. While basic functionality might work on mobile devices, we strongly recommend using BlueQuill on larger screens for the best experience and access to all features.
+**Important Notices!** 
+- **Device Compatibility:** BlueQuill is optimized for desktop and laptop computers. While basic features are accessible on mobile devices, we strongly recommend using a desktop/laptop for the best experience and full feature access.
+- **Browser Support:** For optimal performance, use Chrome, Firefox, or Edge browsers.
+- **Screen Requirements:** A minimum screen width of 1024px is recommended for the best user experience.
+- **Data Security Notice:** Documents are currently stored without encryption. Please avoid storing sensitive or confidential information. BlueQuill is not recommended for commercial or enterprise use at this time.
 
 > 💡 **Pro tip:** For optimal performance and functionality, use BlueQuill on Chrome, Firefox, or Edge browsers with a minimum screen width of 1024px.
 
