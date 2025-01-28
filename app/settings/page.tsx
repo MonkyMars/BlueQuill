@@ -3,24 +3,36 @@ import { useAuth } from "@/utils/AuthProvider";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchProfile } from "@/utils/user/auth/profile";
+import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Settings() {
   const { user, updateUserProfile, signOut } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [message, setMessage] = useState({ type: "", text: "" });
   const [formData, setFormData] = useState({
-    displayName: user?.user_metadata?.display_name || '',
-    email: user?.email || '',
+    displayName: user?.user_metadata?.display_name || "",
+    email: user?.email || "",
   });
 
   useEffect(() => {
     if (!user) return;
     fetchProfile(user.id).then((data) => {
       setFormData({
-        displayName: data?.full_name || '',
-        email: user.email || '',
-      })
+        displayName: data?.full_name || "",
+        email: user.email || "",
+      });
     });
   }, [user]);
 
@@ -29,10 +41,13 @@ export default function Settings() {
     setLoading(true);
     try {
       await updateUserProfile(formData);
-      setMessage({ type: 'success', text: 'Settings updated successfully!' });
+      setMessage({ type: "success", text: "Settings updated successfully!" });
     } catch (error) {
-      console.error('Error updating settings:', error);
-      setMessage({ type: 'error', text: 'Failed to update settings. Please try again.' });
+      console.error("Error updating settings:", error);
+      setMessage({
+        type: "error",
+        text: "Failed to update settings. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -40,15 +55,15 @@ export default function Settings() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSignOut = async () => {
     await signOut();
-    router.replace('/login');
+    router.replace("/login");
   };
 
   return (
@@ -57,18 +72,25 @@ export default function Settings() {
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <h1 className="text-2xl font-bold text-gray-800 mb-6">Settings</h1>
-            
+
             {message.text && (
-              <div className={`mb-4 p-4 rounded ${
-                message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-              }`}>
+              <div
+                className={`mb-4 p-4 rounded ${
+                  message.type === "success"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
                 {message.text}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="displayName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Display Name
                 </label>
                 <input
@@ -82,7 +104,10 @@ export default function Settings() {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Email Address
                 </label>
                 <input
@@ -94,7 +119,9 @@ export default function Settings() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
                   disabled
                 />
-                <p className="mt-1 text-sm text-gray-500">Email cannot be changed</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Email cannot be changed
+                </p>
               </div>
 
               <button
@@ -102,28 +129,70 @@ export default function Settings() {
                 disabled={loading}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
               >
-                {loading ? 'Saving...' : 'Save Changes'}
+                {loading ? "Saving..." : "Save Changes"}
               </button>
             </form>
 
             <div className="mt-8 pt-6 border-t border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Danger Zone</h2>
-              <button
-                onClick={() => {/* TODO: Implement account deletion */}}
-                className="block w-full px-4 py-2 text-red-600 font-medium border-2 border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors duration-300"
-              >
-                Delete Account
-              </button>
-                <button 
-                className="block w-full mt-4 px-4 py-2 text-red-600 font-medium border-2 border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors duration-300" 
-                onClick={handleSignOut}
-                >
-                Log out
-                </button>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                Danger Zone
+              </h2>
+              <AlertDialog>
+                <AlertDialogTrigger className="block w-full mt-4 px-4 py-2 text-red-600 font-medium border-2 border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors duration-300">
+                  Delete Account
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete your account
+                    and remove your data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSignOut} className={cn(
+              "bg-red-500 text-white hover:bg-red-600",
+              "focus:ring-2 focus:ring-red-500 focus:ring-opacity-50",
+              "rounded-md transition-colors cursor-pointer px-4 py-2"
+              )}>
+                      Delete Account
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <AlertDialog>
+                <AlertDialogTrigger className="block w-full mt-4 px-4 py-2 text-red-600 font-medium border-2 border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors duration-300">
+                  Log out
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will log you out of your account.
+                      You will need to sign in again to continue using the app.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSignOut} className={cn(
+              "bg-red-500 text-white hover:bg-red-600",
+              "focus:ring-2 focus:ring-red-500 focus:ring-opacity-50",
+              "rounded-md transition-colors cursor-pointer px-4 py-2"
+              )}>
+                      Log Out
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </div>
       </div>
     </main>
   );
-} 
+}
