@@ -1,59 +1,134 @@
-import { X } from "lucide-react";
+'use client';
+
+import React, { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { FileUser } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MenuProps {
-  isVisible: boolean;
-  cords: { x: number; y: number };
-  onClose: () => void;
-  onRemove: (index: number) => void;
-  onRoleChange: (role: "editor" | "viewer") => void;
+  onRemove: (id: string) => void;
+  onRoleChange: (id: string, role: "editor" | "viewer") => void;
+  user: {
+    full_name: string;
+    email: string;
+    role: "editor" | "viewer";
+    id: string;
+  };
 }
 
-const Menu = ({ isVisible, cords, onRemove, onRoleChange, onClose }: MenuProps) => {
-  if (!isVisible) return null;
-  console.log(cords);
+const Menu = ({ onRemove, onRoleChange, user }: MenuProps) => {
+  const [newRole, setNewRole] = useState<"editor" | "viewer">(user.role);
   return (
-    <div
-      style={{ top: cords.y - 320, left: cords.x - 800 }}
-      className="fixed z-[99] bg-white shadow-lg rounded-lg border border-gray-200 p-2 min-w-[150px]"
-    >
-      <header className="flex items-center justify-center gap-4">
-        <h3>Options</h3>
-        <X size={18} className="text-gray-600 hover:text-black transition-all duration-200 cursor-pointer" onClick={onClose}/>
-      </header>
-
-      <div className="px-3 py-2 text-sm text-gray-600 rounded-md">
-        <div className="flex items-center justify-between">
-          <span>Role</span>
-          <select
-            onChange={(e) =>
-              onRoleChange(e.target.value as "editor" | "viewer")
-            }
-            className="ml-2 text-sm border rounded px-3 appearance-none py-2 cursor-pointer hover:bg-gray-50"
-          >
-            <option value="viewer">Viewer</option>
-            <option value="editor">Editor</option>
-          </select>
-        </div>
-      </div>
-      <button
-        onClick={() => onRemove(1)}
-        className="bg-red-600 text-white px-3 py-2 text-sm rounded-md w-full hover:bg-red-700 flex items-center justify-center gap-2 transitions-all duration-200"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4"
-          viewBox="0 0 20 20"
-          fill="currentColor"
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <EllipsisVertical />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>{user.full_name}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer">
+              Change Role
+            </DropdownMenuItem>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Change Role</AlertDialogTitle>
+            </AlertDialogHeader>
+            <AlertDialogDescription>
+              Please select a new role for {user.full_name}.
+            </AlertDialogDescription>
+            <div className="relative">
+              <FileUser
+                  size={24}
+                  className="absolute left-3 top-1/3 -translate-y-1/2 text-gray-400"
+                />
+            <select
+              name="role"
+              id="role"
+              value={newRole}
+              onChange={(e) =>
+                setNewRole(e.target.value as "editor" | "viewer")
+              }
+              className="w-full pl-12 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 bg-transparent cursor-pointer appearance-none mb-4"
+            >
+              <option value="editor">Editor</option>
+              <option value="viewer">Viewer</option>
+            </select>
+            </div>
+            
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                className="bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                onClick={() => onRoleChange(user.id, newRole)}
+                >
+                Submit
+                </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <DropdownMenuItem
+          onSelect={(e) => e.preventDefault()}
+          className={cn(
+            "flex items-center gap-2 text-destructive",
+            "hover:bg-destructive hover:text-destructive-foreground",
+            "focus:bg-destructive focus:text-destructive-foreground",
+            "rounded-md transition-colors cursor-pointer"
+          )}
         >
-          <path
-            fillRule="evenodd"
-            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-            clipRule="evenodd"
-          />
-        </svg>
-        Remove
-      </button>
-    </div>
+          <Trash2 className="h-4 w-4" />
+          Remove
+        </DropdownMenuItem>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove User</AlertDialogTitle>
+          </AlertDialogHeader>
+          <AlertDialogDescription>
+            Are you sure you want to remove {user.full_name} from this document?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={cn(
+              "bg-red-500 text-white hover:bg-red-600",
+              "focus:ring-2 focus:ring-red-500 focus:ring-opacity-50",
+              "rounded-md transition-colors cursor-pointer px-4 py-2"
+              )}
+              onClick={() => onRemove(user.id)}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+        </AlertDialog>
+        
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 
