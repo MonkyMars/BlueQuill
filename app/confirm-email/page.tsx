@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { database } from "@/utils/client";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -108,4 +108,10 @@ const ConfirmEmailPage = () => {
   );
 };
 
-export default ConfirmEmailPage;
+const SuspenseConfirmEmailPage = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <ConfirmEmailPage />
+  </Suspense>
+);
+
+export default SuspenseConfirmEmailPage;
