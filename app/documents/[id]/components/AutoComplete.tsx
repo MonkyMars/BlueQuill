@@ -80,6 +80,7 @@ export const useEditorAutocomplete = ({
         // Dispatch changes
         editor.view.dispatch(tr);
 
+        // Use requestAnimationFrame to ensure the DOM is updated before measuring coordinates
         requestAnimationFrame(() => {
           if (!editor?.view?.coordsAtPos) return;
           try {
@@ -107,7 +108,7 @@ export const useEditorAutocomplete = ({
   useEffect(() => {
     console.log("Auto-complete effect triggered!");
 
-    if (!editor || !autoComplete || !editor.view.dom) {
+    if (!editor || !editor.view.dom) {
       console.log("Skipping auto-complete setup - editor not ready:", editor?.view.dom);
       return;
     }
@@ -116,6 +117,9 @@ export const useEditorAutocomplete = ({
     console.log("Attaching listeners to:", editorElement);
 
     const handleAutoComplete = async () => {
+      if (!autoComplete) {
+        return;
+      }
       console.log("Handle auto-complete called");
       const now = Date.now();
       const timeSinceLastSuggestion = now - lastSuggestionTime;
@@ -181,9 +185,13 @@ export const useEditorAutocomplete = ({
       }
       
       if (event.altKey || event.metaKey || event.ctrlKey) return;
+      
+      // If there's an existing suggestion, decline it on keyup.
       if (currentSuggestion && suggestionPos !== null) {
         declineSuggestion();
       }
+      
+      // Trigger auto-complete after a short pause (e.g. 1 second)
       timeoutRef.current = setTimeout(() => {
         if (mounted.current) {
           console.log("Triggering auto-complete after typing pause");
@@ -195,6 +203,7 @@ export const useEditorAutocomplete = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!mounted.current) return;
       console.log("KeyDown event triggered:", event.key);
+      
       if (event.key === "Tab" && currentSuggestion && suggestionPos !== null) {
         event.preventDefault();
         acceptSuggestion();
