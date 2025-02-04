@@ -18,3 +18,17 @@ export interface ProfileType {
   updated_at: string;
   user_id: string;
 }
+
+export interface userDataDownloadType {
+  user_metadata: {
+    full_name: string;
+    email: string;
+    plan: string;
+    created_at: string;
+  }
+  documents: {
+    created_at: string;
+    title: string;
+    content: string;
+  }[]
+}

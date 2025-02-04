@@ -45,16 +45,18 @@ export const useEditorAutocomplete = ({
       if (!editor?.view?.state) return;
 
       try {
+        // Sanitize and trim the completion to ensure clean text insertion.
         const sanitizedCompletion = completion
           .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
-          .replace(/\uFFFD/g, "");
+          .replace(/\uFFFD/g, "")
+          .trim();
 
         if (!sanitizedCompletion) return;
 
         const { state } = editor.view;
-        const docSize = state.doc.content.size;
+        const docSize = state.doc.nodeSize - 2;
 
-        if (from < 0 || from > docSize) {
+        if (from < 1 || from > docSize) {
           console.error("Invalid position for suggestion insertion:", from);
           return;
         }
@@ -63,26 +65,26 @@ export const useEditorAutocomplete = ({
         const tr = state.tr;
         const suggestionMark = editor.schema.marks.suggestion;
 
-        // 1. Remove existing suggestion marks
+        // Remove existing suggestion marks
         if (suggestionMark) {
           tr.removeMark(0, docSize, suggestionMark);
         }
 
-        // 2. Insert text
-        tr.insertText(sanitizedCompletion, from);
+        // Insert clean text
+        tr.insertText(" " + sanitizedCompletion, from);
 
-        // 3. Add new suggestion mark
+        // Add suggestion mark
         if (suggestionMark) {
           const mark = suggestionMark.create();
           tr.addMark(from, from + sanitizedCompletion.length, mark);
         }
 
-        // Dispatch all changes in one transaction
+        // Dispatch changes
         editor.view.dispatch(tr);
 
+        // Use requestAnimationFrame to ensure the DOM is updated before measuring coordinates
         requestAnimationFrame(() => {
           if (!editor?.view?.coordsAtPos) return;
-
           try {
             const coords = editor.view.coordsAtPos(from);
             if (coords) {
@@ -106,9 +108,7 @@ export const useEditorAutocomplete = ({
   );
 
   useEffect(() => {
-    console.log("Auto-complete effect triggered!");
-
-    if (!editor || !autoComplete || !editor.view.dom) {
+    if (!editor || !editor.view.dom) {
       console.log(
         "Skipping auto-complete setup - editor not ready:",
         editor?.view.dom
@@ -117,13 +117,15 @@ export const useEditorAutocomplete = ({
     }
 
     const editorElement = editor.view.dom;
-    console.log("Attaching listeners to:", editorElement);
-
     const handleAutoComplete = async () => {
+      console.log("Auto-complete triggered!");
+      if (!autoComplete) {
+        return;
+      }
       console.log("Handle auto-complete called");
       const now = Date.now();
       const timeSinceLastSuggestion = now - lastSuggestionTime;
-      if (timeSinceLastSuggestion < 60000) {
+      if (timeSinceLastSuggestion <= 60000) {
         console.log("Too soon for auto-completion.");
         return;
       }
@@ -143,7 +145,6 @@ export const useEditorAutocomplete = ({
         Math.max(0, from - 100),
         from
       );
-
       if (currentContent.length < 5) {
         setCurrentSuggestion(null);
         setSuggestionPos(null);
@@ -159,14 +160,12 @@ export const useEditorAutocomplete = ({
           content: editor.getHTML(),
           selection: null,
         };
-        console.log("Document context for auto-completion:", documentContext);
         const completion = await getAutoCompletion(
           currentContent,
           documentContext
         );
-        console.log("Auto-completion result:", completion);
-        if (!mounted.current || !completion || !editor) return;
-
+        if (!completion || !editor) return;
+        console.warn("Auto-completion result:", completion);
         setLastSuggestionTime(now);
         setCurrentSuggestion(completion);
         setSuggestionPos(from);
@@ -184,28 +183,26 @@ export const useEditorAutocomplete = ({
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (!mounted.current) return;
+      // if (!mounted.current) return;
       console.log("KeyUp event triggered:", event.key);
 
       if (timeoutRef.current !== undefined) {
-      clearTimeout(timeoutRef.current);
+        clearTimeout(timeoutRef.current);
       }
 
-      // Skip special keys and modifier combinations
-      if (event.altKey || event.metaKey || event.ctrlKey) {
-      return;
-      }
+      if (event.altKey || event.metaKey || event.ctrlKey) return;
 
-      // Decline suggestion only if we have an active one
+      // If there's an existing suggestion, decline it on keyup.
       if (currentSuggestion && suggestionPos !== null) {
-      declineSuggestion();
+        declineSuggestion();
       }
 
+      // Trigger auto-complete after a short pause (e.g. 1 second)
       timeoutRef.current = setTimeout(() => {
-      if (mounted.current) {
-        console.log("Triggering auto-complete after typing pause");
-        handleAutoComplete();
-      }
+        if (mounted.current) {
+          console.log("Triggering auto-complete after typing pause");
+          handleAutoComplete();
+        }
       }, 1000);
     };
 
@@ -214,40 +211,22 @@ export const useEditorAutocomplete = ({
       console.log("KeyDown event triggered:", event.key);
 
       if (event.key === "Tab" && currentSuggestion && suggestionPos !== null) {
-      event.preventDefault();
-      acceptSuggestion();
-      return;
+        event.preventDefault();
+        acceptSuggestion();
+        return;
       }
-
       if (event.key === "Escape") {
-      event.preventDefault();
-      declineSuggestion();
-      return;
+        event.preventDefault();
+        declineSuggestion();
+        return;
       }
     };
-    console.log(editor) 
-    /* 
-    CURRENT ISSUE: editor.on does not work, might be because the editor is undefined. need to fix. 
-    when typing, 'Editor update event triggered' is not logged to the console. No given errors.
-    */
-    editor.on('update', () => {
-      console.log("Editor update event triggered");
-      if (timeoutRef.current !== undefined) {
-        clearTimeout(timeoutRef.current);
-      }
-      
-      timeoutRef.current = setTimeout(() => {
-        if (mounted.current) {
-          handleAutoComplete();
-        }
-      }, 1000);
-    });
 
+    handleAutoComplete();
     editorElement.addEventListener("keyup", handleKeyUp);
     editorElement.addEventListener("keydown", handleKeyDown);
-
     return () => {
-      console.log("Cleaning up auto-complete");
+      // console.log("Cleaning up auto-complete");
       mounted.current = false;
       if (timeoutRef.current !== undefined) {
         clearTimeout(timeoutRef.current);
