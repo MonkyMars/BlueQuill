@@ -20,15 +20,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const prompt = `Document Title: ${documentTitle || ""}
-${documentContent ? `Document Content: ${documentContent}` : ""}
-Previous text: ${context}
+    const prompt = `Document Title: ${documentTitle || "Untitled"}
+  ${documentContent ? `Document Content: ${documentContent}\n` : ""}
+  Context: ${context}
 
-Instructions: Continue the text naturally, matching the style and context.
-Provide a single coherent continuation.
-
-Text to continue:
-${context}`;
+  Instructions: Continue the text naturally while preserving its style and coherence.
+  Text to continue:
+  ${context}`;
 
     const response = await cohere.generate({
       model: "command",

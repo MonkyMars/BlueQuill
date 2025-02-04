@@ -34,7 +34,9 @@ export const useEditorAutocomplete = ({
   setSuggestionPosition,
   setLastSuggestionTime,
 }: AutoCompleteProps) => {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
   const mounted = useRef(true);
 
   const insertSuggestion = useCallback(
@@ -69,7 +71,7 @@ export const useEditorAutocomplete = ({
         }
 
         // Insert clean text
-        tr.insertText(' ' + sanitizedCompletion, from);
+        tr.insertText(" " + sanitizedCompletion, from);
 
         // Add suggestion mark
         if (suggestionMark) {
@@ -107,7 +109,10 @@ export const useEditorAutocomplete = ({
 
   useEffect(() => {
     if (!editor || !editor.view.dom) {
-      console.log("Skipping auto-complete setup - editor not ready:", editor?.view.dom);
+      console.log(
+        "Skipping auto-complete setup - editor not ready:",
+        editor?.view.dom
+      );
       return;
     }
 
@@ -136,7 +141,10 @@ export const useEditorAutocomplete = ({
         return;
       }
 
-      const currentContent = editor.state.doc.textBetween(Math.max(0, from - 100), from);
+      const currentContent = editor.state.doc.textBetween(
+        Math.max(0, from - 100),
+        from
+      );
       if (currentContent.length < 5) {
         setCurrentSuggestion(null);
         setSuggestionPos(null);
@@ -152,7 +160,10 @@ export const useEditorAutocomplete = ({
           content: editor.getHTML(),
           selection: null,
         };
-        const completion = await getAutoCompletion(currentContent, documentContext);
+        const completion = await getAutoCompletion(
+          currentContent,
+          documentContext
+        );
         if (!completion || !editor) return;
         console.warn("Auto-completion result:", completion);
         setLastSuggestionTime(now);
@@ -178,14 +189,14 @@ export const useEditorAutocomplete = ({
       if (timeoutRef.current !== undefined) {
         clearTimeout(timeoutRef.current);
       }
-      
+
       if (event.altKey || event.metaKey || event.ctrlKey) return;
-      
+
       // If there's an existing suggestion, decline it on keyup.
       if (currentSuggestion && suggestionPos !== null) {
         declineSuggestion();
       }
-      
+
       // Trigger auto-complete after a short pause (e.g. 1 second)
       timeoutRef.current = setTimeout(() => {
         if (mounted.current) {
@@ -198,7 +209,7 @@ export const useEditorAutocomplete = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!mounted.current) return;
       console.log("KeyDown event triggered:", event.key);
-      
+
       if (event.key === "Tab" && currentSuggestion && suggestionPos !== null) {
         event.preventDefault();
         acceptSuggestion();

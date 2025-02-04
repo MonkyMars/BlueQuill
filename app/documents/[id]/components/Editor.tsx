@@ -90,6 +90,7 @@ export const Editor = ({ content, onUpdate }: EditorProps) => {
   }, []);
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         document: false,
