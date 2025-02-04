@@ -221,12 +221,10 @@ export const useEditorAutocomplete = ({
         return;
       }
     };
-    handleAutoComplete();
-    editor.on("update", () => console.log("Editor updated"));
-    editor.off("update", () => console.log("Editor updated"));
-    editor.view.dom.addEventListener("keyup", handleKeyUp);
-    editor.view.dom.addEventListener("keydown", handleKeyDown);
 
+    handleAutoComplete();
+    editorElement.addEventListener("keyup", handleKeyUp);
+    editorElement.addEventListener("keydown", handleKeyDown);
     return () => {
       // console.log("Cleaning up auto-complete");
       mounted.current = false;
