@@ -52,9 +52,9 @@ export const useEditorAutocomplete = ({
         if (!sanitizedCompletion) return;
 
         const { state } = editor.view;
-        const docSize = state.doc.content.size;
+        const docSize = state.doc.nodeSize - 2;
 
-        if (from < 0 || from > docSize) {
+        if (from < 1 || from > docSize) {
           console.error("Invalid position for suggestion insertion:", from);
           return;
         }
@@ -69,7 +69,7 @@ export const useEditorAutocomplete = ({
         }
 
         // Insert clean text
-        tr.insertText(sanitizedCompletion, from);
+        tr.insertText(' ' + sanitizedCompletion, from);
 
         // Add suggestion mark
         if (suggestionMark) {
@@ -106,24 +106,21 @@ export const useEditorAutocomplete = ({
   );
 
   useEffect(() => {
-    console.log("Auto-complete effect triggered!");
-
     if (!editor || !editor.view.dom) {
       console.log("Skipping auto-complete setup - editor not ready:", editor?.view.dom);
       return;
     }
 
     const editorElement = editor.view.dom;
-    console.log("Attaching listeners to:", editorElement);
-
     const handleAutoComplete = async () => {
+      console.log("Auto-complete triggered!");
       if (!autoComplete) {
         return;
       }
       console.log("Handle auto-complete called");
       const now = Date.now();
       const timeSinceLastSuggestion = now - lastSuggestionTime;
-      if (timeSinceLastSuggestion < 60000) {
+      if (timeSinceLastSuggestion <= 60000) {
         console.log("Too soon for auto-completion.");
         return;
       }
@@ -155,11 +152,9 @@ export const useEditorAutocomplete = ({
           content: editor.getHTML(),
           selection: null,
         };
-        console.log("Document context for auto-completion:", documentContext);
         const completion = await getAutoCompletion(currentContent, documentContext);
-        console.log("Auto-completion result:", completion);
-        if (!mounted.current || !completion || !editor) return;
-
+        if (!completion || !editor) return;
+        console.warn("Auto-completion result:", completion);
         setLastSuggestionTime(now);
         setCurrentSuggestion(completion);
         setSuggestionPos(from);
@@ -177,7 +172,7 @@ export const useEditorAutocomplete = ({
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (!mounted.current) return;
+      // if (!mounted.current) return;
       console.log("KeyUp event triggered:", event.key);
 
       if (timeoutRef.current !== undefined) {
@@ -215,12 +210,14 @@ export const useEditorAutocomplete = ({
         return;
       }
     };
-
-    editorElement.addEventListener("keyup", handleKeyUp);
-    editorElement.addEventListener("keydown", handleKeyDown);
+    handleAutoComplete();
+    editor.on("update", () => console.log("Editor updated"));
+    editor.off("update", () => console.log("Editor updated"));
+    editor.view.dom.addEventListener("keyup", handleKeyUp);
+    editor.view.dom.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      console.log("Cleaning up auto-complete");
+      // console.log("Cleaning up auto-complete");
       mounted.current = false;
       if (timeoutRef.current !== undefined) {
         clearTimeout(timeoutRef.current);
