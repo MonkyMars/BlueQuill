@@ -111,7 +111,7 @@ export default function Home() {
                   </div>
                   </div>
                   <blockquote className="mt-6 text-lg text-center text-slate-700">
-                  {testimonial.quote}
+                  &ldquo;{testimonial.quote}&ldquo;
                   </blockquote>
                   <footer className="mt-6">
                   <div className="font-semibold text-gray-900">{testimonial.author}</div>
