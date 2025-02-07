@@ -1,12 +1,12 @@
 import { CohereClient } from "cohere-ai";
 import { NextResponse } from "next/server";
 
-if (!process.env.COHERE_API_KEY) {
+if (!process.env.NEXT_PUBLIC_COHERE_API_KEY) {
   throw new Error("Missing NEXT_PUBLIC_COHERE_API_KEY environment variable");
 }
 
 const cohere = new CohereClient({
-  token: process.env.COHERE_API_KEY,
+  token: process.env.NEXT_PUBLIC_COHERE_API_KEY,
 });
 
 export async function POST(request: Request) {

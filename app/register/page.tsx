@@ -36,8 +36,6 @@ const Page = () => {
       confirmPassword: "",
     };
 
-   
-
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
       isValid = false;
