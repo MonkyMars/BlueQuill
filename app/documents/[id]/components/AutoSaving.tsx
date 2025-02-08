@@ -31,6 +31,7 @@ export const AutoSaving = ({
       title: documentTitle,
       content: editor.getHTML(),
       owner: ownerId,
+      collaborators: [],
     }).then(() => {
       setSaving(false);
     });

@@ -128,6 +128,7 @@ export default function Documents() {
       content: "",
       type: "blog",
       status: "draft",
+      collaborators: [],
     };
     const data = await createUserDocument(newDocument, user.id);
     if (data && data.success) {

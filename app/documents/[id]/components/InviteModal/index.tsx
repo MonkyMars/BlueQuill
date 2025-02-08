@@ -1,61 +1,47 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Send,
   X,
   Mail,
   FileUser,
-  ArrowRight,
 } from "lucide-react";
 
 import ProfilePictureCanvas from "@/utils/user/profilePicture";
 import Menu from "./menu";
+import { addCollaborator, removeCollaborator, updateCollaboratorRole, getCollaborators, CollaboratorWithProfile } from '@/utils/document/collaborators';
+import { DocumentType } from "@/utils/types";
+
+type CollaboratorRole = 'editor' | 'viewer';
 
 const InviteModal = ({
   isOpen,
   onClose,
+  document
 }: {
   isOpen: boolean;
   onClose: (closed: boolean) => void;
+  document: DocumentType;
 }) => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-  const [role, setRole] = useState<"editor" | "viewer">("editor");
+  const [role, setRole] = useState<CollaboratorRole>("editor");
   const [loading, setLoading] = useState<boolean>(false);
-  const [usersList, setUsersList] = useState<
-    {
-      email: string;
-      role: "editor" | "viewer";
-      full_name: string;
-      id: string;
-    }[]
-  >([]);
   const [success, setSuccess] = useState<string>("");
-  const [users, setUsers] = useState<{
-    email: string;
-    role: "editor" | "viewer";
-    full_name: string;
-    id: string;
-  }[]>([
-    {
-      full_name: "John Doe",
-      email: "johndoe@hotmail.com",
-      role: "editor",
-      id: "1",
-    },
-    {
-      full_name: "Jane Doe",
-      email: "janedoe@hotmail.com",
-      role: "viewer",
-      id: "2",
-    },
-    {
-      full_name: "John Smith",
-      email: "johnsmith@hotmail.com",
-      role: "editor",
-      id: "3",
-    },
-  ]);
+  const [collaborators, setCollaborators] = useState<CollaboratorWithProfile[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadCollaborators();
+    }
+  }, [isOpen, document.id]);
+
+  const loadCollaborators = async () => {
+    const result = await getCollaborators(document.id);
+    if (result.success && result.collaborators) {
+      setCollaborators(result.collaborators);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -64,54 +50,54 @@ const InviteModal = ({
     return re.test(email);
   };
 
-  const handleInvite = (e: { preventDefault: () => void }) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
     setLoading(true);
-    if(usersList.length + users.length >= 4) {
-      setError("You can only invite up to 4 collaborators");
+    
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address");
       setLoading(false);
       return;
     }
-    usersList.map((user) => {
-      if (!validateEmail(user.email)) {
-        setError("Please enter a valid email");
-        setLoading(false);
-        return;
-      }
-    });
-    setSuccess("Invite sent successfully");
+  
+    const result = await addCollaborator(document.id, email, role);
+    
+    if (result.success) {
+      setSuccess(`Successfully added ${email} as a ${role}`);
+      setEmail("");
+      loadCollaborators();
+    } else {
+      setError(result.error || "Failed to add collaborator");
+    }
+    
     setLoading(false);
   };
 
-  const addUserToList = () => {
-    if (!validateEmail(email)) {
-      setError("Please enter a valid email");
-      return;
+  const handleRemoveCollaborator = async (userId: string) => {
+    const result = await removeCollaborator(document.id, userId);
+    
+    if (result.success) {
+      loadCollaborators();
+    } else {
+      setError(result.error || "Failed to remove collaborator");
     }
-    setUsersList([
-      ...usersList,
-      { email, role, full_name: email.split("@")[0], id: `${usersList.length + 1}` },
-    ]);
-    setRole("editor");
-    setEmail("");
   };
 
-  const removeUser = (id: string) => {
-    setUsers(users.filter((user) => user.id !== id));
+  const isValidRole = (value: string): value is CollaboratorRole => {
+    return value === 'editor' || value === 'viewer';
   };
 
-  const handleRoleChange = (id: string, role: "editor" | "viewer") => {
-    console.log(id, role);
-    const updatedUsersList = users.map((user) => {
-      console.log('user', user);
-      if (user.id === id) {
-        return { ...user, role };
-      }
-      return user;
-    });
-    console.log(updatedUsersList);
-    setUsers(updatedUsersList);
-  }; 
+  const handleRoleUpdate = async (userId: string, newRole: CollaboratorRole) => {
+    const result = await updateCollaboratorRole(document.id, userId, newRole);
+    
+    if (result.success) {
+      loadCollaborators();
+    } else {
+      setError(result.error || "Failed to update collaborator role");
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center p-4 z-50 h-screen w-screen">
@@ -132,7 +118,6 @@ const InviteModal = ({
         {/* Main Content */}
         <div className="p-6">
           <form onSubmit={handleInvite}>
-            {/* Success Message */}
             {success && (
               <div className="mb-6 bg-green-50 border border-green-100 rounded-lg p-3 flex items-center justify-between">
                 <span className="text-green-700 text-sm font-medium">{success}</span>
@@ -145,7 +130,18 @@ const InviteModal = ({
               </div>
             )}
 
-            {/* Email Input */}
+            {error && (
+              <div className="mb-6 bg-red-50 border border-red-100 rounded-lg p-3 flex items-center justify-between">
+                <span className="text-red-700 text-sm font-medium">{error}</span>
+                <button
+                  onClick={() => setError("")}
+                  className="p-1 rounded-full hover:bg-red-100 transition-colors"
+                >
+                  <X size={16} className="text-red-600" />
+                </button>
+              </div>
+            )}
+
             <div className="space-y-1.5 mb-4">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email
@@ -155,26 +151,19 @@ const InviteModal = ({
                   size={20}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 />
-                <ArrowRight
-                  onClick={addUserToList}
-                  size={20}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-md cursor-pointer transition-all"
-                />
                 <input
-                  type="text"
+                  type="email"
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={`w-full pl-10 pr-12 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 ${
-                    error ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "border-gray-300"
+                    error ? "border-red-300" : "border-gray-300"
                   }`}
                   placeholder="Enter email address"
                 />
               </div>
-              {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
             </div>
 
-            {/* Role Select */}
             <div className="space-y-1.5 mb-6">
               <label htmlFor="role" className="block text-sm font-medium text-gray-700">
                 Role
@@ -187,7 +176,12 @@ const InviteModal = ({
                 <select
                   id="role"
                   value={role}
-                  onChange={(e) => setRole(e.target.value as "editor" | "viewer")}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (isValidRole(value)) {
+                      setRole(value);
+                    }
+                  }}
                   className="w-full pl-10 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-800 appearance-none cursor-pointer pr-10"
                 >
                   <option value="editor">Editor</option>
@@ -201,49 +195,12 @@ const InviteModal = ({
               </div>
             </div>
 
-            {/* Users to be Added */}
-            {usersList.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">To be added</h3>
-                <div className="space-y-2">
-                  {usersList
-                    .filter((user) => user.email.trim() !== "")
-                    .map((user, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <ProfilePictureCanvas name={user.full_name} size={36} />
-                          <div>
-                            <p className="font-medium text-gray-900">{user.full_name}</p>
-                            <p className="text-sm text-gray-500">{user.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <span
-                            className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              user.role === "editor"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-700"
-                            }`}
-                          >
-                            {user.role}
-                          </span>
-                          <Menu onRemove={() => removeUser(user.id)} onRoleChange={handleRoleChange} user={user} />
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Submit Button */}
             <button
-              disabled={!email || loading}
+              type="submit"
+              disabled={loading || !email}
               className="w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/50 transition-colors disabled:opacity-50 disabled:hover:bg-blue-600 flex items-center justify-center space-x-2"
             >
-              <span>{usersList.length > 0 ? `Send Invites (${usersList.length})` : 'Send Invite'}</span>
+              <span>{loading ? "Adding..." : "Add Collaborator"}</span>
               <Send size={18} />
             </button>
           </form>
@@ -252,32 +209,45 @@ const InviteModal = ({
         {/* Current Collaborators */}
         <div className="border-t border-gray-100 p-6">
           <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-            Current Collaborators <span className="ml-2 text-gray-500">({users.length}/4)</span>
+            Current Collaborators <span className="ml-2 text-gray-500">({collaborators.length})</span>
           </h3>
           <div className="space-y-2">
-            {users.map((user, index) => (
+            {collaborators.map((collaborator) => (
               <div
-                key={index}
+                key={collaborator.id}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className="flex items-center space-x-3">
-                  <ProfilePictureCanvas name={user.full_name} size={36} />
+                  <ProfilePictureCanvas name={collaborator.profiles.full_name} size={36} />
                   <div>
-                    <p className="font-medium text-gray-900">{user.full_name}</p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
+                    <p className="font-medium text-gray-900">{collaborator.profiles.full_name}</p>
+                    <p className="text-sm text-gray-500">{collaborator.profiles.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span
                     className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      user.role === "editor"
+                      collaborator.role === "editor"
                         ? "bg-blue-100 text-blue-700"
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    {user.role}
+                    {collaborator.role}
                   </span>
-                  <Menu onRemove={() => removeUser(user.id)} onRoleChange={handleRoleChange} user={user} />
+                  <Menu
+                    onRemove={() => handleRemoveCollaborator(collaborator.user_id)}
+                    onRoleChange={(role) => {
+                      if (isValidRole(role)) {
+                        handleRoleUpdate(collaborator.user_id, role);
+                      }
+                    }}
+                    user={{
+                      id: collaborator.user_id,
+                      role: collaborator.role,
+                      email: collaborator.profiles.email,
+                      full_name: collaborator.profiles.full_name
+                    }}
+                  />
                 </div>
               </div>
             ))}

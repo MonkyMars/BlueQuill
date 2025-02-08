@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "ws-server": "ts-node --project app/api/ws/tsconfig.json app/api/ws/socket.ts"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.5",
@@ -14,9 +15,10 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.47.15",
     "@tailwindcss/typography": "^0.5.16",
     "@tiptap/core": "^2.1.12",
+    "@tiptap/extension-collaboration": "^2.11.5",
+    "@tiptap/extension-collaboration-cursor": "^2.11.5",
     "@tiptap/extension-link": "^2.11.3",
     "@tiptap/extension-text-style": "^2.1.12",
     "@tiptap/extension-underline": "^2.11.3",
@@ -25,24 +27,31 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cohere-ai": "^7.15.4",
+    "express": "^4.21.2",
     "lucide-react": "^0.473.0",
     "next": "^15.1.5",
     "openai": "^4.78.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "supabase": "^2.6.8",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "ws": "^8.18.0",
+    "y-websocket": "^2.1.0",
+    "yjs": "^13.6.23"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
+    "@supabase/supabase-js": "^2.48.1",
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.17.17",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.1.4",
     "postcss": "^8",
+    "supabase": "^2.9.6",
     "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

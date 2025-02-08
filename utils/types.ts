@@ -1,3 +1,10 @@
+export interface Collaborator {
+  userId: string;
+  email: string;
+  role: "editor" | "viewer";
+  full_name?: string;
+}
+
 export interface DocumentType {
   id: string;
   title: string;
@@ -7,6 +14,7 @@ export interface DocumentType {
   owner: string;
   type?: "blog" | "article" | "academic" | "script";
   status?: "draft" | "completed";
+  collaborators: Collaborator[];
 }
 
 export interface ProfileType {

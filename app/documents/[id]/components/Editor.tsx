@@ -12,6 +12,18 @@ import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import { useEffect, useState } from "react";
 import { EditorContent } from "@tiptap/react";
+import { WebsocketProvider } from "y-websocket";
+import * as Y from 'yjs';
+import { useAuth } from "@/utils/AuthProvider";
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { useParams } from "next/navigation";
+
+// Define proper types for collaboration
+interface CollaborationUser {
+  name: string;
+  color: string;
+}
 
 type FontSizeOptions = {
   types: string[];
@@ -84,10 +96,44 @@ interface EditorProps {
 
 export const Editor = ({ content, onUpdate }: EditorProps) => {
   const [isMounted, setIsMounted] = useState(false);
+  const { user } = useAuth();
+  const params = useParams();
+  const [ydoc] = useState(() => new Y.Doc());
+  const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+  const [editorReady, setEditorReady] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Initialize WebSocket provider first
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const wsProvider = new WebsocketProvider(
+      process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080",
+      `document.${params.id}`,
+      ydoc,
+      {
+        connect: true,
+      }
+    );
+
+    wsProvider.awareness.setLocalState({
+      user: {
+        name: user?.email || 'Anonymous',
+        color: '#' + Math.floor(Math.random()*16777215).toString(16),
+      }
+    });
+
+    setProvider(wsProvider);
+    setEditorReady(true);
+
+    return () => {
+      wsProvider.destroy();
+      setEditorReady(false);
+    };
+  }, [isMounted, params.id, ydoc, user]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -99,6 +145,7 @@ export const Editor = ({ content, onUpdate }: EditorProps) => {
         heading: false,
         bold: false,
         italic: false,
+        history: false,
       }),
       Document,
       Paragraph.configure({
@@ -107,16 +154,6 @@ export const Editor = ({ content, onUpdate }: EditorProps) => {
         },
       }),
       Text,
-      Bold.configure({
-        HTMLAttributes: {
-          class: "font-bold",
-        },
-      }),
-      Italic.configure({
-        HTMLAttributes: {
-          class: "italic",
-        },
-      }),
       Heading.configure({
         levels: [1, 2, 3],
         HTMLAttributes: (level: number) => {
@@ -131,6 +168,16 @@ export const Editor = ({ content, onUpdate }: EditorProps) => {
         },
       }),
       TextStyle,
+      Bold.configure({
+        HTMLAttributes: {
+          class: "font-bold",
+        },
+      }),
+      Italic.configure({
+        HTMLAttributes: {
+          class: "italic",
+        },
+      }),
       FontSize.configure({
         types: ["textStyle"],
       }),
@@ -148,6 +195,18 @@ export const Editor = ({ content, onUpdate }: EditorProps) => {
           target: "_blank",
         },
       }),
+      Collaboration.configure({
+        document: ydoc,
+      }),
+      ...(provider && editorReady ? [
+        CollaborationCursor.configure({
+          provider: provider,
+          user: {
+            name: user?.email || 'Anonymous',
+            color: '#' + Math.floor(Math.random()*16777215).toString(16),
+          } as CollaborationUser,
+        }),
+      ] : []),
     ],
     content: isMounted ? content : "",
     editorProps: {
@@ -169,7 +228,7 @@ export const Editor = ({ content, onUpdate }: EditorProps) => {
     }
   }, [editor, content, isMounted]);
 
-  if (!editor || !isMounted) {
+  if (!editor || !isMounted || !editorReady) {
     return null;
   }
 
@@ -203,16 +262,6 @@ export const useCustomEditor = (
         },
       }),
       Text,
-      Bold.configure({
-        HTMLAttributes: {
-          class: "font-bold",
-        },
-      }),
-      Italic.configure({
-        HTMLAttributes: {
-          class: "italic",
-        },
-      }),
       Heading.configure({
         levels: [1, 2, 3],
         HTMLAttributes: (level: number) => {
@@ -227,6 +276,16 @@ export const useCustomEditor = (
         },
       }),
       TextStyle,
+      Bold.configure({
+        HTMLAttributes: {
+          class: "font-bold",
+        },
+      }),
+      Italic.configure({
+        HTMLAttributes: {
+          class: "italic",
+        },
+      }),
       FontSize.configure({
         types: ["textStyle"],
       }),

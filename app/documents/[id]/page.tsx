@@ -172,6 +172,7 @@ export default function EditDocument() {
     title: "Untitled Document",
     content: "",
     updatedAt: new Date(),
+    collaborators: [],
   });
   const [isSaving, setIsSaving] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
@@ -207,6 +208,9 @@ export default function EditDocument() {
     closeText: "",
     confirmText: "",
   });
+  const [collaborationPermission, setCollaborationPermission] = useState<
+    'editor' | 'viewer' | null
+  >(null);
 
   const editor = useCustomEditor(currentDocument.content, (html) => {
     if (html !== currentDocument.content) {
@@ -268,6 +272,25 @@ export default function EditDocument() {
   }, [user, params.id]);
 
   useEffect(() => {
+    const checkCollaborationPermission = async () => {
+      try {
+        if (!currentDocument) return;
+        const userRole = currentDocument.collaborators.find(
+          (collab: { userId: string | undefined; }) => collab.userId === user?.id
+        )?.role;
+
+        setCollaborationPermission(userRole || null);
+      } catch (error) {
+        console.error('Failed to fetch document collaboration permissions', error);
+      }
+    };
+
+    if (user) {
+      checkCollaborationPermission();
+    }
+  }, [user, params.id, currentDocument]);
+
+  useEffect(() => {
     if (editor && currentDocument.content && isEditorReady) {
       editor.commands.setContent(currentDocument.content);
     }
@@ -310,6 +333,7 @@ export default function EditDocument() {
         title: currentDocument.title,
         content: editor?.getHTML() as string,
         updatedAt: new Date(),
+        collaborators: currentDocument.collaborators,
       };
       await saveDocument(saveableDocument);
     } catch (error) {
@@ -317,7 +341,7 @@ export default function EditDocument() {
     } finally {
       setIsSaving(false);
     }
-  }, [params.id, currentDocument.title, editor, user]);
+  }, [params.id, currentDocument.title, currentDocument.collaborators, editor, user]);
 
   const handleAIAssist = useCallback(async () => {
     if (!aiPrompt) return;
@@ -607,7 +631,7 @@ export default function EditDocument() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || collaborationPermission !== 'editor'}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
               >
                 {isSaving ? "Saving..." : "Save"}
@@ -625,6 +649,7 @@ export default function EditDocument() {
               <InviteModal
                 isOpen={inviteModalOpen}
                 onClose={() => setInviteModalOpen(false)}
+                document={currentDocument}
               />
               <button
                 className="hover:bg-slate-100 p-2 rounded-lg flex items-center justify-center transition-all duration-200 group"
